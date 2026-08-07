@@ -9,6 +9,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Função para pegar a data de hoje no fuso do Brasil
+function getTodayBrazil() {
+  const d = new Date();
+  d.setHours(d.getHours() - 3);
+  return d.toISOString().split('T')[0];
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   
@@ -25,9 +32,9 @@ export default function AdminDashboard() {
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Agenda & Filtros
+  // Agenda & Filtros (Inicia com a data de hoje!)
   const [appointments, setAppointments] = useState<any[]>([]);
-  const [filterDate, setFilterDate] = useState("");
+  const [filterDate, setFilterDate] = useState(getTodayBrazil());
   const [blockLoading, setBlockLoading] = useState(false);
 
   // Configurações de Horário
@@ -142,7 +149,7 @@ export default function AdminDashboard() {
     if (!error) fetchAppointments(user.id);
   }
 
-  // --- NOVA LÓGICA DE GRADE INTERATIVA DE BLOQUEIO ---
+  // --- NOVA LÓGICA DE GRADE INTERATIVA DE BLOQUEIO (COM CORREÇÃO DE ERRO) ---
   async function handleToggleGridBlock(time: string, isBlocked: boolean, blockId: string | null, isBooked: boolean) {
     if (isBooked) {
       alert("Este horário já está ocupado por uma cliente. Cancele o agendamento dela na lista abaixo se precisar bloquear.");
@@ -153,26 +160,36 @@ export default function AdminDashboard() {
 
     if (isBlocked && blockId) {
       // Clicou num horário já bloqueado -> Desbloquear
-      await supabase.from("appointments").delete().eq("id", blockId);
+      const { error } = await supabase.from("appointments").delete().eq("id", blockId);
+      if (error) alert("Erro ao desbloquear: " + error.message);
     } else {
-      // Clicou num horário livre -> Criar um bloqueio de 30 minutos (1 quadradinho)
+      // Clicou num horário livre -> Criar um bloqueio de 30 minutos
       const startDateTimeString = `${filterDate}T${time}:00`;
       const [h, m] = time.split(":").map(Number);
       const startMins = (h * 60) + m;
-      const endMins = startMins + 30; // Tamanho exato do botão
+      const endMins = startMins + 30; 
       
       const endH = Math.floor(endMins / 60);
       const endM = endMins % 60;
       const endDateTimeString = `${filterDate}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`;
 
-      await supabase.from("appointments").insert([{
+      // TRUQUE: Pega o ID de um serviço existente para satisfazer o banco de dados. 
+      // A interface vai ignorar isso e mostrar apenas "🔒 Horário Bloqueado"
+      const safeServiceId = services.length > 0 ? services[0].id : null;
+
+      const { error } = await supabase.from("appointments").insert([{
         profile_id: user.id,
+        service_id: safeServiceId,
         client_name: "🔒 BLOQUEIO",
         client_phone: "00000000000",
         start_time: startDateTimeString,
         end_time: endDateTimeString,
         status: "Bloqueado",
       }]);
+
+      if (error) {
+        alert("Erro ao bloquear horário: " + error.message);
+      }
     }
 
     await fetchAppointments(user.id);
@@ -404,7 +421,7 @@ export default function AdminDashboard() {
                       const slotStartMins = (h * 60) + m;
                       const slotEndMins = slotStartMins + 30;
 
-                      // Checar quem está ocupando este bloco específico
+                      // Checar quem está ocupando este bloco
                       const overlappingAppts = filteredAppointments.filter(appt => {
                         let aStart = 0;
                         let aEnd = 0;
