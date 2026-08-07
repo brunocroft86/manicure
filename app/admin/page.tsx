@@ -29,6 +29,13 @@ export default function AdminDashboard() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [filterDate, setFilterDate] = useState("");
 
+  // Bloqueio de Agenda
+  const [showBlockForm, setShowBlockForm] = useState(false);
+  const [blockDate, setBlockDate] = useState("");
+  const [blockTime, setBlockTime] = useState("");
+  const [blockDuration, setBlockDuration] = useState("60");
+  const [blockLoading, setBlockLoading] = useState(false);
+
   // Configurações de Horário
   const [startHour, setStartHour] = useState("9");
   const [endHour, setEndHour] = useState("18");
@@ -136,9 +143,45 @@ export default function AdminDashboard() {
   }
 
   async function handleDeleteAppointment(id: string) {
-    if (!window.confirm("Deseja realmente excluir este agendamento?")) return;
+    if (!window.confirm("Deseja realmente excluir/desbloquear este item?")) return;
     const { error } = await supabase.from("appointments").delete().eq("id", id);
     if (!error) fetchAppointments(user.id);
+  }
+
+  async function handleCreateBlock(e: React.FormEvent) {
+    e.preventDefault();
+    if (!blockDate || !blockTime || !blockDuration) return alert("Preencha todos os campos do bloqueio.");
+    
+    setBlockLoading(true);
+    
+    const startDateTimeString = `${blockDate}T${blockTime}:00`;
+    const [h, m] = blockTime.split(":").map(Number);
+    const startMins = (h * 60) + m;
+    const endMins = startMins + parseInt(blockDuration);
+    
+    const endH = Math.floor(endMins / 60);
+    const endM = endMins % 60;
+    const endDateTimeString = `${blockDate}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`;
+
+    const { error } = await supabase.from("appointments").insert([{
+      profile_id: user.id,
+      client_name: "🔒 BLOQUEIO",
+      client_phone: "00000000000",
+      start_time: startDateTimeString,
+      end_time: endDateTimeString,
+      status: "Bloqueado",
+    }]);
+
+    setBlockLoading(false);
+    if (!error) {
+      setShowBlockForm(false);
+      setBlockDate("");
+      setBlockTime("");
+      setBlockDuration("60");
+      fetchAppointments(user.id);
+    } else {
+      alert("Erro ao criar bloqueio: " + error.message);
+    }
   }
 
   async function handleSaveConfig(e: React.FormEvent) {
@@ -178,7 +221,7 @@ export default function AdminDashboard() {
 
   const filteredAppointments = appointments.filter(appt => {
     if (!filterDate) return true;
-    const apptDate = appt.start_time.split("T")[0];
+    const apptDate = appt.start_time?.split("T")[0];
     return apptDate === filterDate;
   });
 
@@ -322,7 +365,15 @@ export default function AdminDashboard() {
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
                 <h3 className="text-xl font-bold text-slate-800">Próximos Agendamentos</h3>
                 
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+                  <button 
+                    onClick={() => setShowBlockForm(!showBlockForm)}
+                    className="bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition-colors flex items-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    {showBlockForm ? "Cancelar" : "Bloquear Horário"}
+                  </button>
+
                   <input 
                     type="date" 
                     value={filterDate} 
@@ -339,25 +390,49 @@ export default function AdminDashboard() {
                   )}
                 </div>
               </div>
+
+              {/* Formulário de Bloqueio de Agenda */}
+              {showBlockForm && (
+                <form onSubmit={handleCreateBlock} className="bg-slate-50 border border-slate-200 p-5 rounded-2xl mb-6 animate-in fade-in zoom-in-95 duration-200">
+                  <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    🔒 Adicionar Bloqueio na Agenda
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Data</label>
+                      <input type="date" value={blockDate} onChange={e => setBlockDate(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border-slate-200 bg-white outline-none focus:ring-2 focus:ring-slate-300" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Início (Ex: 12:00)</label>
+                      <input type="time" value={blockTime} onChange={e => setBlockTime(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border-slate-200 bg-white outline-none focus:ring-2 focus:ring-slate-300" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-1">Duração (Minutos)</label>
+                      <input type="number" placeholder="60" value={blockDuration} onChange={e => setBlockDuration(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border-slate-200 bg-white outline-none focus:ring-2 focus:ring-slate-300" required />
+                    </div>
+                  </div>
+                  <button type="submit" disabled={blockLoading} className="bg-slate-800 text-white font-bold py-2.5 px-6 rounded-xl text-sm w-full sm:w-auto hover:bg-slate-700 transition-colors">
+                    {blockLoading ? "Salvando..." : "Confirmar Bloqueio"}
+                  </button>
+                </form>
+              )}
               
               <div className="space-y-4">
                 {filteredAppointments.length === 0 && (
                   <div className="text-center py-16 bg-slate-50/50 rounded-3xl border-2 border-dashed border-pink-100">
-                    <p className="text-slate-500 font-medium text-lg">Nenhum agendamento encontrado.</p>
+                    <p className="text-slate-500 font-medium text-lg">Nenhum registro encontrado.</p>
                     <p className="text-sm text-slate-400 mt-2">Tente mudar a data do filtro ou divulgue seu link!</p>
                   </div>
                 )}
 
                 {filteredAppointments.map((appt) => {
-                  // EXTRACÃO BLINDADA POR POSIÇÃO DE TEXTO (IGNORA TOTALMENTE QUALQUER FUSO HORÁRIO)
-                  // Exemplo de start_time vindo do banco: "2026-08-05T10:00:00"
                   let timePart = "00:00";
                   let datePart = "2026-01-01";
 
                   if (appt.start_time && appt.start_time.includes("T")) {
                     const parts = appt.start_time.split("T");
                     datePart = parts[0];
-                    timePart = parts[1].substring(0, 5); // Pega exatamente "10:00"
+                    timePart = parts[1].substring(0, 5); 
                   }
 
                   const [year, month, day] = datePart.split("-");
@@ -370,57 +445,75 @@ export default function AdminDashboard() {
                     `Olá ${appt.client_name}! Aqui é do ${profile?.business_name}. Estou entrando em contato para confirmar seu agendamento de *${appt.service?.name}* para o dia *${fullDateFormatted}* às *${timePart}*. Tudo confirmado?`
                   );
 
+                  // Verifica se é um Bloqueio (para mudar a cor e layout do card)
+                  const isBlock = appt.status === "Bloqueado" || appt.client_name?.includes("BLOQUEIO");
+
                   return (
-                    <div key={appt.id} className="flex flex-col sm:flex-row p-5 rounded-2xl border border-slate-100 bg-slate-50/30 gap-4 justify-between items-start sm:items-center">
+                    <div key={appt.id} className={`flex flex-col sm:flex-row p-5 rounded-2xl border gap-4 justify-between items-start sm:items-center ${isBlock ? 'bg-slate-100/70 border-slate-200' : 'bg-slate-50/30 border-slate-100'}`}>
                       <div className="flex items-center gap-4">
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 w-16 h-16 flex flex-col items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-bold text-pink-500 uppercase">{monthNameStr}</span>
-                          <span className="text-xl font-extrabold text-slate-800 leading-none mt-1">{day}</span>
+                        <div className={`rounded-xl shadow-sm border w-16 h-16 flex flex-col items-center justify-center flex-shrink-0 ${isBlock ? 'bg-slate-200 border-slate-300 opacity-60' : 'bg-white border-slate-200'}`}>
+                          <span className={`text-xs font-bold uppercase ${isBlock ? 'text-slate-500' : 'text-pink-500'}`}>{monthNameStr}</span>
+                          <span className={`text-xl font-extrabold leading-none mt-1 ${isBlock ? 'text-slate-600' : 'text-slate-800'}`}>{day}</span>
                         </div>
                         
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-slate-800 text-lg leading-tight">{appt.client_name}</h4>
-                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase ${
-                              appt.status === 'Concluído' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                            }`}>
-                              {appt.status || 'Pendente'}
-                            </span>
+                            <h4 className={`font-bold text-lg leading-tight ${isBlock ? 'text-slate-600 line-through decoration-slate-400' : 'text-slate-800'}`}>
+                              {isBlock ? "🔒 Horário Bloqueado" : appt.client_name}
+                            </h4>
+                            {!isBlock && (
+                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase ${
+                                appt.status === 'Concluído' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {appt.status || 'Pendente'}
+                              </span>
+                            )}
                           </div>
-                          <p className="text-sm font-medium text-slate-500 mt-0.5">{appt.service?.name} • <strong className="text-slate-700">{timePart}</strong></p>
+                          <p className="text-sm font-medium text-slate-500 mt-0.5">
+                            {isBlock ? "Agenda fechada neste período" : appt.service?.name} • <strong className="text-slate-700">{timePart}</strong>
+                          </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex-wrap">
-                        <a 
-                          href={`https://wa.me/55${appt.client_phone}?text=${whatsMessage}`} 
-                          target="_blank" 
-                          className="text-xs font-bold text-green-700 bg-green-50 px-3 py-2 rounded-xl hover:bg-green-100 transition-colors flex items-center gap-1.5 shadow-sm"
-                        >
-                          WhatsApp
-                        </a>
+                        
+                        {!isBlock && (
+                          <>
+                            <a 
+                              href={`https://wa.me/55${appt.client_phone}?text=${whatsMessage}`} 
+                              target="_blank" 
+                              className="text-xs font-bold text-green-700 bg-green-50 px-3 py-2 rounded-xl hover:bg-green-100 transition-colors flex items-center gap-1.5 shadow-sm"
+                            >
+                              WhatsApp
+                            </a>
 
-                        {appt.status !== 'Concluído' ? (
-                          <button 
-                            onClick={() => handleUpdateStatus(appt.id, 'Concluído')}
-                            className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
-                          >
-                            Concluir
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => handleUpdateStatus(appt.id, 'Pendente')}
-                            className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl hover:bg-amber-100 transition-colors shadow-sm"
-                          >
-                            Reabrir
-                          </button>
+                            {appt.status !== 'Concluído' ? (
+                              <button 
+                                onClick={() => handleUpdateStatus(appt.id, 'Concluído')}
+                                className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                              >
+                                Concluir
+                              </button>
+                            ) : (
+                              <button 
+                                onClick={() => handleUpdateStatus(appt.id, 'Pendente')}
+                                className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl hover:bg-amber-100 transition-colors shadow-sm"
+                              >
+                                Reabrir
+                              </button>
+                            )}
+                          </>
                         )}
 
                         <button 
                           onClick={() => handleDeleteAppointment(appt.id)}
-                          className="text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded-xl hover:bg-red-100 transition-colors shadow-sm"
+                          className={`text-xs font-bold px-3 py-2 rounded-xl transition-colors shadow-sm ${
+                            isBlock 
+                              ? 'text-slate-700 bg-white border border-slate-300 hover:bg-slate-200' 
+                              : 'text-red-500 bg-red-50 hover:bg-red-100'
+                          }`}
                         >
-                          Excluir
+                          {isBlock ? "Desbloquear" : "Excluir"}
                         </button>
                       </div>
                     </div>
