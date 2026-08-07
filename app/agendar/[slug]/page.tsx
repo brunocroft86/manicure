@@ -25,7 +25,6 @@ export default function AgendarPage() {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   
-  // Estado para controlar a caixinha de aviso personalizada
   const [alertMessage, setAlertMessage] = useState("");
   
   const [bookedIntervals, setBookedIntervals] = useState<{startMins: number, endMins: number}[]>([]);
@@ -54,12 +53,19 @@ export default function AgendarPage() {
 
     if (profileData) {
       setProfile(profileData);
+      
+      // SEO Dinâmico: Altera o título da aba do navegador
+      document.title = `${profileData.business_name} | Agendamento Online`;
+
       const { data: servicesData } = await supabase
         .from("services")
         .select("*")
         .eq("profile_id", profileData.id)
         .order("created_at", { ascending: false });
-      if (servicesData) setServices(servicesData);
+      
+      if (servicesData) {
+        setServices(servicesData);
+      }
     }
     setLoading(false);
   }
@@ -99,7 +105,6 @@ export default function AgendarPage() {
   async function handleBooking(e: React.FormEvent) {
     e.preventDefault();
     
-    // Validações usando o modal personalizado em vez de alert()
     if (!selectedService) return setAlertMessage("Selecione um serviço para continuar.");
     if (!selectedDate) return setAlertMessage("Selecione uma data para o agendamento.");
     if (!selectedTime) return setAlertMessage("Escolha um dos horários disponíveis.");
@@ -139,7 +144,11 @@ export default function AgendarPage() {
   }
 
   if (loading) {
-    return <div className="min-h-screen bg-pink-50 flex items-center justify-center text-pink-500 font-bold animate-pulse">Carregando estúdio...</div>;
+    return (
+      <div className="min-h-screen bg-pink-50 flex items-center justify-center text-pink-500 font-bold animate-pulse">
+        Carregando estúdio...
+      </div>
+    );
   }
 
   if (!profile) {
@@ -164,11 +173,28 @@ export default function AgendarPage() {
       
       <header className="bg-white/80 backdrop-blur-md border-b border-pink-100 py-6 px-4 text-center shadow-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto">
-          <div className="w-16 h-16 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-2xl mx-auto flex items-center justify-center shadow-md shadow-pink-200 mb-3">
-            <span className="text-white text-3xl font-extrabold">{profile.business_name.charAt(0).toUpperCase()}</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">{profile.business_name}</h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">Agende seu horário online</p>
+          
+          {/* Renderização condicional da Logo */}
+          {profile.logo_url ? (
+            <img 
+              src={profile.logo_url} 
+              alt={`Logo de ${profile.business_name}`} 
+              className="w-20 h-20 rounded-2xl mx-auto shadow-md shadow-pink-200 mb-3 object-cover border-2 border-white"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-2xl mx-auto flex items-center justify-center shadow-md shadow-pink-200 mb-3 border-2 border-white">
+              <span className="text-white text-3xl font-extrabold">
+                {profile.business_name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">
+            {profile.business_name}
+          </h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">
+            Agende seu horário online
+          </p>
         </div>
       </header>
 
@@ -176,12 +202,25 @@ export default function AgendarPage() {
         {success ? (
           <div className="bg-white p-8 sm:p-10 rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white text-center animate-in fade-in zoom-in duration-300">
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-3">Agendamento Realizado!</h2>
-            <p className="text-slate-500 mb-8">Tudo pronto! Seu horário foi reservado com sucesso.</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-3">
+              Agendamento Realizado!
+            </h2>
+            <p className="text-slate-500 mb-8">
+              Tudo pronto! Seu horário foi reservado com sucesso.
+            </p>
             <button 
-              onClick={() => { setSuccess(false); setSelectedService(null); setSelectedDate(""); setSelectedTime(""); setClientName(""); setClientPhone(""); }}
+              onClick={() => { 
+                setSuccess(false); 
+                setSelectedService(null); 
+                setSelectedDate(""); 
+                setSelectedTime(""); 
+                setClientName(""); 
+                setClientPhone(""); 
+              }}
               className="bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-pink-200 hover:shadow-xl active:scale-[0.98] transition-all"
             >
               Fazer Outro Agendamento
@@ -198,7 +237,9 @@ export default function AgendarPage() {
 
               <div className="space-y-3">
                 {services.length === 0 && (
-                  <p className="text-slate-500 text-sm italic text-center py-4">Nenhum serviço disponível no momento.</p>
+                  <p className="text-slate-500 text-sm italic text-center py-4">
+                    Nenhum serviço disponível no momento.
+                  </p>
                 )}
                 {services.map((service) => {
                   const isSelected = selectedService?.id === service.id;
@@ -213,10 +254,16 @@ export default function AgendarPage() {
                       }`}
                     >
                       <div>
-                        <h4 className={`font-bold ${isSelected ? 'text-pink-700' : 'text-slate-800'}`}>{service.name}</h4>
-                        <p className="text-xs text-slate-400 mt-1 font-medium">{service.duration_minutes} minutos</p>
+                        <h4 className={`font-bold ${isSelected ? 'text-pink-700' : 'text-slate-800'}`}>
+                          {service.name}
+                        </h4>
+                        <p className="text-xs text-slate-400 mt-1 font-medium">
+                          {service.duration_minutes} minutos
+                        </p>
                       </div>
-                      <span className="text-lg sm:text-xl font-extrabold text-pink-600">R$ {service.price.toFixed(2).replace(".", ",")}</span>
+                      <span className="text-lg sm:text-xl font-extrabold text-pink-600">
+                        R$ {service.price.toFixed(2).replace(".", ",")}
+                      </span>
                     </div>
                   );
                 })}
@@ -318,7 +365,9 @@ export default function AgendarPage() {
             <h3 className="text-xl font-extrabold text-slate-800 mb-2">
               {profile?.business_name || "Aviso"}
             </h3>
-            <p className="text-slate-600 mb-6 font-medium">{alertMessage}</p>
+            <p className="text-slate-600 mb-6 font-medium">
+              {alertMessage}
+            </p>
             <button
               type="button"
               onClick={() => setAlertMessage("")}
