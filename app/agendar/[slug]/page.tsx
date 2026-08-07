@@ -171,34 +171,34 @@ export default function AgendarPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white font-sans text-slate-800 pb-20">
       
-      <header className="bg-white/80 backdrop-blur-md border-b border-pink-100 py-6 px-4 text-center shadow-sm sticky top-0 z-10">
+      {/* CABEÇALHO COMPACTO OTIMIZADO PARA MOBILE */}
+      <header className="bg-white/80 backdrop-blur-md border-b border-pink-100 py-3 sm:py-5 px-4 text-center shadow-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto">
           
-          {/* Renderização condicional da Logo */}
           {profile.logo_url ? (
             <img 
               src={profile.logo_url} 
               alt={`Logo de ${profile.business_name}`} 
-              className="w-20 h-20 rounded-2xl mx-auto shadow-md shadow-pink-200 mb-3 object-cover border-2 border-white"
+              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl mx-auto shadow-sm shadow-pink-200 mb-1.5 sm:mb-2 object-cover border-2 border-white"
             />
           ) : (
-            <div className="w-16 h-16 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-2xl mx-auto flex items-center justify-center shadow-md shadow-pink-200 mb-3 border-2 border-white">
-              <span className="text-white text-3xl font-extrabold">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-xl sm:rounded-2xl mx-auto flex items-center justify-center shadow-sm shadow-pink-200 mb-1.5 sm:mb-2 border-2 border-white">
+              <span className="text-white text-xl sm:text-2xl font-extrabold">
                 {profile.business_name.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
 
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">
+          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-800 leading-tight">
             {profile.business_name}
           </h1>
-          <p className="text-sm text-slate-500 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-slate-500 font-medium">
             Agende seu horário online
           </p>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 pt-8">
+      <main className="max-w-2xl mx-auto px-4 pt-5 sm:pt-8">
         {success ? (
           <div className="bg-white p-8 sm:p-10 rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white text-center animate-in fade-in zoom-in duration-300">
             <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
