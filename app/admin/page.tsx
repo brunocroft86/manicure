@@ -28,12 +28,6 @@ export default function AdminDashboard() {
   // Agenda & Filtros
   const [appointments, setAppointments] = useState<any[]>([]);
   const [filterDate, setFilterDate] = useState("");
-
-  // Bloqueio de Agenda
-  const [showBlockForm, setShowBlockForm] = useState(false);
-  const [blockDate, setBlockDate] = useState("");
-  const [blockTime, setBlockTime] = useState("");
-  const [blockDuration, setBlockDuration] = useState("60");
   const [blockLoading, setBlockLoading] = useState(false);
 
   // Configurações de Horário
@@ -148,40 +142,41 @@ export default function AdminDashboard() {
     if (!error) fetchAppointments(user.id);
   }
 
-  async function handleCreateBlock(e: React.FormEvent) {
-    e.preventDefault();
-    if (!blockDate || !blockTime || !blockDuration) return alert("Preencha todos os campos do bloqueio.");
-    
-    setBlockLoading(true);
-    
-    const startDateTimeString = `${blockDate}T${blockTime}:00`;
-    const [h, m] = blockTime.split(":").map(Number);
-    const startMins = (h * 60) + m;
-    const endMins = startMins + parseInt(blockDuration);
-    
-    const endH = Math.floor(endMins / 60);
-    const endM = endMins % 60;
-    const endDateTimeString = `${blockDate}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`;
-
-    const { error } = await supabase.from("appointments").insert([{
-      profile_id: user.id,
-      client_name: "🔒 BLOQUEIO",
-      client_phone: "00000000000",
-      start_time: startDateTimeString,
-      end_time: endDateTimeString,
-      status: "Bloqueado",
-    }]);
-
-    setBlockLoading(false);
-    if (!error) {
-      setShowBlockForm(false);
-      setBlockDate("");
-      setBlockTime("");
-      setBlockDuration("60");
-      fetchAppointments(user.id);
-    } else {
-      alert("Erro ao criar bloqueio: " + error.message);
+  // --- NOVA LÓGICA DE GRADE INTERATIVA DE BLOQUEIO ---
+  async function handleToggleGridBlock(time: string, isBlocked: boolean, blockId: string | null, isBooked: boolean) {
+    if (isBooked) {
+      alert("Este horário já está ocupado por uma cliente. Cancele o agendamento dela na lista abaixo se precisar bloquear.");
+      return;
     }
+
+    setBlockLoading(true);
+
+    if (isBlocked && blockId) {
+      // Clicou num horário já bloqueado -> Desbloquear
+      await supabase.from("appointments").delete().eq("id", blockId);
+    } else {
+      // Clicou num horário livre -> Criar um bloqueio de 30 minutos (1 quadradinho)
+      const startDateTimeString = `${filterDate}T${time}:00`;
+      const [h, m] = time.split(":").map(Number);
+      const startMins = (h * 60) + m;
+      const endMins = startMins + 30; // Tamanho exato do botão
+      
+      const endH = Math.floor(endMins / 60);
+      const endM = endMins % 60;
+      const endDateTimeString = `${filterDate}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`;
+
+      await supabase.from("appointments").insert([{
+        profile_id: user.id,
+        client_name: "🔒 BLOQUEIO",
+        client_phone: "00000000000",
+        start_time: startDateTimeString,
+        end_time: endDateTimeString,
+        status: "Bloqueado",
+      }]);
+    }
+
+    await fetchAppointments(user.id);
+    setBlockLoading(false);
   }
 
   async function handleSaveConfig(e: React.FormEvent) {
@@ -224,6 +219,15 @@ export default function AdminDashboard() {
     const apptDate = appt.start_time?.split("T")[0];
     return apptDate === filterDate;
   });
+
+  // Geração dos horários para a grade interativa
+  const sH = parseInt(startHour);
+  const eH = parseInt(endHour);
+  const availableHours = [];
+  for (let i = sH; i < eH; i++) {
+    availableHours.push(`${String(i).padStart(2, '0')}:00`);
+    availableHours.push(`${String(i).padStart(2, '0')}:30`);
+  }
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white font-sans text-slate-800 pb-20">
@@ -288,10 +292,10 @@ export default function AdminDashboard() {
           </button>
         </div>
 
+        {/* ================= ABA CATÁLOGO ================= */}
         {activeTab === "catalogo" && (
           <div className="animate-in fade-in duration-300">
             <div className="flex flex-col lg:flex-row gap-6 sm:gap-10">
-              
               <div className="w-full lg:w-1/3">
                 <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white lg:sticky lg:top-36">
                   <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5 flex items-center gap-2">
@@ -300,7 +304,6 @@ export default function AdminDashboard() {
                     </span>
                     Novo Serviço
                   </h3>
-
                   <form onSubmit={handleAddService} className="space-y-4">
                     <div>
                       <label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Nome do Serviço</label>
@@ -320,14 +323,12 @@ export default function AdminDashboard() {
                   </form>
                 </div>
               </div>
-
               <div className="w-full lg:w-2/3">
                 <div className="bg-white p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white">
                   <div className="flex justify-between items-center mb-5 sm:mb-6 px-1">
                     <h3 className="text-lg sm:text-xl font-bold text-slate-800">Meus Serviços</h3>
                     <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full">{services.length} ativos</span>
                   </div>
-                  
                   <div className="space-y-3 sm:space-y-4">
                     {services.length === 0 && (
                       <div className="text-center py-12 bg-slate-50/50 rounded-2xl border-2 border-dashed border-pink-100">
@@ -358,70 +359,108 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ================= ABA AGENDA ================= */}
         {activeTab === "agenda" && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="bg-white p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white max-w-3xl mx-auto">
               
+              {/* Header da Agenda com Filtro */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
                 <h3 className="text-xl font-bold text-slate-800">Próximos Agendamentos</h3>
                 
-                <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:flex-nowrap">
-                  <button 
-                    onClick={() => setShowBlockForm(!showBlockForm)}
-                    className="bg-slate-800 text-white font-bold px-4 py-2 rounded-xl text-sm hover:bg-slate-700 transition-colors flex items-center gap-2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                    {showBlockForm ? "Cancelar" : "Bloquear Horário"}
-                  </button>
-
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <input 
                     type="date" 
                     value={filterDate} 
                     onChange={(e) => setFilterDate(e.target.value)} 
-                    className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 outline-none w-full sm:w-auto"
+                    className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none w-full sm:w-auto focus:ring-2 focus:ring-pink-300 transition-all"
                   />
                   {filterDate && (
                     <button 
                       onClick={() => setFilterDate("")} 
-                      className="text-xs text-pink-500 font-bold hover:underline whitespace-nowrap"
+                      className="text-xs text-slate-500 bg-slate-100 px-3 py-2.5 rounded-xl font-bold hover:bg-slate-200 whitespace-nowrap transition-colors"
                     >
-                      Limpar Filtro
+                      Ver Todos
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Formulário de Bloqueio de Agenda */}
-              {showBlockForm && (
-                <form onSubmit={handleCreateBlock} className="bg-slate-50 border border-slate-200 p-5 rounded-2xl mb-6 animate-in fade-in zoom-in-95 duration-200">
-                  <h4 className="font-bold text-slate-700 mb-3 flex items-center gap-2">
-                    🔒 Adicionar Bloqueio na Agenda
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Data</label>
-                      <input type="date" value={blockDate} onChange={e => setBlockDate(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border-slate-200 bg-white outline-none focus:ring-2 focus:ring-slate-300" required />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Início (Ex: 12:00)</label>
-                      <input type="time" value={blockTime} onChange={e => setBlockTime(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border-slate-200 bg-white outline-none focus:ring-2 focus:ring-slate-300" required />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1">Duração (Minutos)</label>
-                      <input type="number" placeholder="60" value={blockDuration} onChange={e => setBlockDuration(e.target.value)} className="w-full px-3 py-2.5 rounded-xl border-slate-200 bg-white outline-none focus:ring-2 focus:ring-slate-300" required />
+              {/* GRADE INTERATIVA (Aparece apenas quando uma data está selecionada) */}
+              {filterDate && (
+                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-8 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+                    <h4 className="font-bold text-slate-700">Gerenciar Grade de Horários</h4>
+                    <div className="flex gap-3 text-[10px] sm:text-xs font-bold text-slate-500 uppercase">
+                      <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-white border border-slate-300"></div> Livre</span>
+                      <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-slate-200"></div> Bloqueado</span>
+                      <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-pink-100 border border-pink-300"></div> Cliente</span>
                     </div>
                   </div>
-                  <button type="submit" disabled={blockLoading} className="bg-slate-800 text-white font-bold py-2.5 px-6 rounded-xl text-sm w-full sm:w-auto hover:bg-slate-700 transition-colors">
-                    {blockLoading ? "Salvando..." : "Confirmar Bloqueio"}
-                  </button>
-                </form>
+                  
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                    {availableHours.map((time) => {
+                      const [h, m] = time.split(":").map(Number);
+                      const slotStartMins = (h * 60) + m;
+                      const slotEndMins = slotStartMins + 30;
+
+                      // Checar quem está ocupando este bloco específico
+                      const overlappingAppts = filteredAppointments.filter(appt => {
+                        let aStart = 0;
+                        let aEnd = 0;
+                        if (appt.start_time && appt.end_time) {
+                          const startPart = appt.start_time.split("T")[1].substring(0, 5);
+                          const endPart = appt.end_time.split("T")[1].substring(0, 5);
+                          const [sH, sM] = startPart.split(":").map(Number);
+                          const [eH, eM] = endPart.split(":").map(Number);
+                          aStart = sH * 60 + sM;
+                          aEnd = eH * 60 + eM;
+                        }
+                        return (slotStartMins < aEnd) && (slotEndMins > aStart);
+                      });
+
+                      const blockAppt = overlappingAppts.find(a => a.client_name === "🔒 BLOQUEIO");
+                      const clientAppt = overlappingAppts.find(a => a.client_name !== "🔒 BLOQUEIO");
+                      
+                      const isBlocked = !!blockAppt;
+                      const isBooked = !!clientAppt;
+
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          disabled={blockLoading}
+                          onClick={() => handleToggleGridBlock(time, isBlocked, blockAppt?.id || null, isBooked)}
+                          className={`py-2 rounded-lg text-xs sm:text-sm font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${
+                            isBooked 
+                              ? 'bg-pink-100 text-pink-700 border-pink-200 cursor-not-allowed'
+                              : isBlocked 
+                                ? 'bg-slate-200 text-slate-500 border-slate-300 hover:bg-slate-300 line-through opacity-80' 
+                                : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600'
+                          }`}
+                        >
+                          {time}
+                          {isBlocked && <span className="text-[10px] leading-none no-underline">🔒</span>}
+                          {isBooked && <span className="text-[10px] leading-none no-underline">💅</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {!filterDate && (
+                <div className="bg-blue-50 text-blue-700 p-4 rounded-xl text-sm font-medium mb-6 flex items-start gap-3 border border-blue-100">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
+                  Dica: Selecione uma data no calendário acima para visualizar a grade completa de horários, onde você pode bloquear ou desbloquear a agenda com um clique!
+                </div>
               )}
               
+              {/* Lista de Agendamentos Detalhada */}
               <div className="space-y-4">
                 {filteredAppointments.length === 0 && (
                   <div className="text-center py-16 bg-slate-50/50 rounded-3xl border-2 border-dashed border-pink-100">
                     <p className="text-slate-500 font-medium text-lg">Nenhum registro encontrado.</p>
-                    <p className="text-sm text-slate-400 mt-2">Tente mudar a data do filtro ou divulgue seu link!</p>
                   </div>
                 )}
 
@@ -438,14 +477,12 @@ export default function AdminDashboard() {
                   const [year, month, day] = datePart.split("-");
                   const monthsNames = ["JAN.", "FEV.", "MAR.", "ABR.", "MAI.", "JUN.", "JUL.", "AGO.", "SET.", "OUT.", "NOV.", "DEZ."];
                   const monthNameStr = monthsNames[parseInt(month, 10) - 1];
-
                   const fullDateFormatted = `${day}/${month}/${year}`;
 
                   const whatsMessage = encodeURIComponent(
                     `Olá ${appt.client_name}! Aqui é do ${profile?.business_name}. Estou entrando em contato para confirmar seu agendamento de *${appt.service?.name}* para o dia *${fullDateFormatted}* às *${timePart}*. Tudo confirmado?`
                   );
 
-                  // Verifica se é um Bloqueio (para mudar a cor e layout do card)
                   const isBlock = appt.status === "Bloqueado" || appt.client_name?.includes("BLOQUEIO");
 
                   return (
@@ -476,7 +513,6 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex-wrap">
-                        
                         {!isBlock && (
                           <>
                             <a 
@@ -524,6 +560,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
+        {/* ================= ABA CONFIGURAÇÕES ================= */}
         {activeTab === "config" && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white max-w-xl mx-auto">
