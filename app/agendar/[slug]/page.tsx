@@ -25,6 +25,9 @@ export default function AgendarPage() {
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
   
+  // Estado para controlar a caixinha de aviso personalizada
+  const [alertMessage, setAlertMessage] = useState("");
+  
   const [bookedIntervals, setBookedIntervals] = useState<{startMins: number, endMins: number}[]>([]);
 
   useEffect(() => {
@@ -95,10 +98,12 @@ export default function AgendarPage() {
 
   async function handleBooking(e: React.FormEvent) {
     e.preventDefault();
-    if (!selectedService) return alert("Selecione um serviço.");
-    if (!selectedDate) return alert("Selecione uma data.");
-    if (!selectedTime) return alert("Escolha um horário.");
-    if (!clientName || !clientPhone) return alert("Preencha seu nome e WhatsApp.");
+    
+    // Validações usando o modal personalizado em vez de alert()
+    if (!selectedService) return setAlertMessage("Selecione um serviço para continuar.");
+    if (!selectedDate) return setAlertMessage("Selecione uma data para o agendamento.");
+    if (!selectedTime) return setAlertMessage("Escolha um dos horários disponíveis.");
+    if (!clientName || !clientPhone) return setAlertMessage("Por favor, preencha seu nome e WhatsApp.");
 
     setSubmitting(true);
 
@@ -126,7 +131,7 @@ export default function AgendarPage() {
     setSubmitting(false);
 
     if (error) {
-      alert("Erro ao agendar: " + error.message);
+      setAlertMessage("Erro ao agendar: " + error.message);
     } else {
       setSuccess(true);
       fetchBookedTimes(selectedDate);
@@ -160,7 +165,7 @@ export default function AgendarPage() {
       <header className="bg-white/80 backdrop-blur-md border-b border-pink-100 py-6 px-4 text-center shadow-sm sticky top-0 z-10">
         <div className="max-w-2xl mx-auto">
           <div className="w-16 h-16 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-2xl mx-auto flex items-center justify-center shadow-md shadow-pink-200 mb-3">
-            <span className="text-white text-3xl font-extrabold">{profile.business_name.charAt(0)}</span>
+            <span className="text-white text-3xl font-extrabold">{profile.business_name.charAt(0).toUpperCase()}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">{profile.business_name}</h1>
           <p className="text-sm text-slate-500 mt-1 font-medium">Agende seu horário online</p>
@@ -253,7 +258,7 @@ export default function AgendarPage() {
                           type="button"
                           key={time}
                           disabled={isBooked}
-                          onClick={() => selectedService ? setSelectedTime(time) : alert("Por favor, selecione um serviço no Passo 1 primeiro!")}
+                          onClick={() => selectedService ? setSelectedTime(time) : setAlertMessage("Por favor, selecione um serviço no Passo 1 primeiro!")}
                           className={`py-3 rounded-xl text-sm font-bold border-2 transition-all ${
                             isBooked 
                               ? 'bg-slate-100 text-slate-400 border-slate-100 cursor-not-allowed line-through opacity-70'
@@ -302,10 +307,29 @@ export default function AgendarPage() {
             >
               {submitting ? "Confirmando Agendamento..." : "Confirmar Agendamento"}
             </button>
-
           </form>
         )}
       </main>
+
+      {/* Modal de Aviso Personalizado */}
+      {alertMessage && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xs w-full shadow-2xl scale-100 animate-in zoom-in-95 duration-200 text-center">
+            <h3 className="text-xl font-extrabold text-slate-800 mb-2">
+              {profile?.business_name || "Aviso"}
+            </h3>
+            <p className="text-slate-600 mb-6 font-medium">{alertMessage}</p>
+            <button
+              type="button"
+              onClick={() => setAlertMessage("")}
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-pink-200"
+            >
+              OK, entendi
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
