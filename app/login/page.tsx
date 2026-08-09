@@ -79,7 +79,8 @@ export default function LoginPage() {
             id: authData.user.id, // O mesmo ID da autenticação!
             business_name: businessName,
             slug: slug,
-            phone: whatsapp.replace(/\D/g, ""), // Salva só os números
+            // CORREÇÃO APLICADA AQUI: Mudei de 'phone' para 'whatsapp'
+            whatsapp: whatsapp.replace(/\D/g, ""), 
           },
         ]);
 
