@@ -52,8 +52,9 @@ export default function Home() {
           </span>
         </h1>
 
+        {/* TEXTO ATUALIZADO EXPLICANDO O CÁLCULO DOS SERVIÇOS */}
         <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-2xl mx-auto font-medium">
-          Adicione seus serviços, valores e a duração de cada atendimento. <strong className="text-slate-900 font-bold">O sistema calcula todo o tempo restante e organiza sua agenda automaticamente</strong> por apenas <strong className="text-pink-600 font-extrabold">R$ 50 mensais</strong>.
+          Adicione seus serviços, valores e o tempo de cada atendimento. <strong className="text-slate-900 font-bold">Assim nós calculamos todo o tempo restante e organizamos os horários para você</strong> por apenas <strong className="text-pink-600 font-extrabold">R$ 50 mensais</strong>.
         </p>
 
         {/* BOTÕES DE AÇÃO */}
@@ -83,7 +84,7 @@ export default function Home() {
             <div className="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 font-bold">1</div>
             <div>
               <h3 className="font-bold text-slate-800 text-sm sm:text-base">Cálculo Automático</h3>
-              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">O sistema gerencia os horários e o tempo restante para você.</p>
+              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Gerencie serviços, valores e o tempo restante sem esforço.</p>
             </div>
           </div>
 
