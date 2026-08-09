@@ -26,6 +26,7 @@ export default function AdminDashboard() {
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
   const [activeTab, setActiveTab] = useState<"catalogo" | "agenda" | "config">("catalogo");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -75,7 +76,6 @@ export default function AdminDashboard() {
     if (profileData) {
       setProfile(profileData);
       
-      // Lógica SaaS de Bloqueio e Cálculo de Dias
       if (profileData.subscription_expires_at) {
         const expireDate = new Date(profileData.subscription_expires_at);
         const today = new Date();
@@ -83,7 +83,6 @@ export default function AdminDashboard() {
         if (today > expireDate) {
           setIsExpired(true);
         } else {
-          // Calcula os dias restantes para o aviso de Teste/Vencimento
           const diffTime = expireDate.getTime() - today.getTime();
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
           setDaysRemaining(diffDays);
@@ -252,38 +251,88 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white font-sans text-slate-800 pb-20">
-      <header className="sticky top-0 z-20 bg-white/85 backdrop-blur-lg border-b border-pink-100/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="h-16 sm:h-20 flex items-center justify-between">
+      
+      {/* HEADER COM MENU HAMBÚRGUER */}
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-pink-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+          
+          <div className="flex items-center gap-3">
+            {/* BOTÃO DO MENU HAMBÚRGUER */}
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2.5 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors md:hidden focus:outline-none"
+              aria-label="Abrir Menu"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                {mobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-xl flex items-center justify-center shadow-md shadow-pink-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-800 hidden sm:block">Beleza<span className="text-pink-500">Pro</span></h1>
-            </div>
-            <div className="flex items-center gap-3 sm:gap-4">
-              <span className="text-sm font-bold text-slate-700 hidden sm:inline">{profile?.business_name}</span>
-              
-              {(daysRemaining !== null && daysRemaining <= 3) && (
-                <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase hidden sm:inline">
-                  Teste Grátis
-                </span>
-              )}
-
-              <button onClick={handleLogout} className="text-xs text-red-500 hover:bg-red-50 px-3 py-1.5 rounded-full font-bold transition-colors">Sair</button>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-800">Beleza<span className="text-pink-500">Pro</span></h1>
             </div>
           </div>
-          <div className="flex gap-6 border-t border-slate-100 pt-2 overflow-x-auto">
-            <button onClick={() => setActiveTab("catalogo")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "catalogo" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Catálogo de Serviços</button>
-            <button onClick={() => setActiveTab("agenda")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "agenda" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Agenda e Horários</button>
-            <button onClick={() => setActiveTab("config")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === "config" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Configurações</button>
+
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-bold text-slate-700 hidden sm:inline">{profile?.business_name}</span>
+            
+            {(daysRemaining !== null && daysRemaining <= 3) && (
+              <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase hidden sm:inline">
+                Teste Grátis
+              </span>
+            )}
+
+            <button onClick={handleLogout} className="text-xs text-red-500 hover:bg-red-50 px-3 py-2 rounded-full font-bold transition-colors">Sair</button>
           </div>
         </div>
+
+        {/* NAVEGAÇÃO DESKTOP (Telas Médias e Grandes) */}
+        <div className="hidden md:flex max-w-7xl mx-auto px-6 gap-6 border-t border-slate-100 pt-2">
+          <button onClick={() => setActiveTab("catalogo")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === "catalogo" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Catálogo de Serviços</button>
+          <button onClick={() => setActiveTab("agenda")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === "agenda" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Agenda e Horários</button>
+          <button onClick={() => setActiveTab("config")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === "config" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Configurações</button>
+        </div>
+
+        {/* MENU MOBILE SUSPENSO (Drawer do Hambúrguer) */}
+        {mobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl py-4 px-6 space-y-3 animate-in slide-in-from-top duration-200 z-40">
+            <div className="pb-2 mb-2 border-b border-slate-100">
+              <p className="text-xs text-slate-400 font-bold uppercase">Logado como</p>
+              <p className="text-base font-black text-slate-800">{profile?.business_name}</p>
+            </div>
+
+            <button 
+              onClick={() => { setActiveTab("catalogo"); setMobileMenuOpen(false); }}
+              className={`w-full text-left py-3 px-4 rounded-xl font-bold text-sm transition-colors flex items-center gap-3 ${activeTab === "catalogo" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-50"}`}
+            >
+              🛍️ Catálogo de Serviços
+            </button>
+            <button 
+              onClick={() => { setActiveTab("agenda"); setMobileMenuOpen(false); }}
+              className={`w-full text-left py-3 px-4 rounded-xl font-bold text-sm transition-colors flex items-center gap-3 ${activeTab === "agenda" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-50"}`}
+            >
+              📅 Agenda e Horários
+            </button>
+            <button 
+              onClick={() => { setActiveTab("config"); setMobileMenuOpen(false); }}
+              className={`w-full text-left py-3 px-4 rounded-xl font-bold text-sm transition-colors flex items-center gap-3 ${activeTab === "config" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-50"}`}
+            >
+              ⚙️ Configurações
+            </button>
+          </div>
+        )}
       </header>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
         
-        {/* BANNER DINÂMICO DE VENCIMENTO / TESTE GRÁTIS COM BOTÃO DE ATIVAÇÃO */}
+        {/* BANNER DINÂMICO DE VENCIMENTO / TESTE GRÁTIS */}
         {profile?.subscription_expires_at && (
           <div className={`px-4 py-3 sm:py-4 rounded-2xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm font-medium border shadow-sm ${
             (daysRemaining !== null && daysRemaining <= 3) 
@@ -319,7 +368,7 @@ export default function AdminDashboard() {
             <h2 className="text-lg sm:text-xl font-extrabold">Link do seu Estúdio</h2>
             <p className="text-pink-100 text-xs sm:text-sm mt-0.5">Envie este link para suas clientes agendarem horários com você.</p>
           </div>
-          <button onClick={handleCopyLink} className="bg-white text-pink-600 font-bold px-5 py-3 rounded-xl shadow hover:bg-pink-50 active:scale-95 transition-all text-sm whitespace-nowrap">
+          <button onClick={handleCopyLink} className="bg-white text-pink-600 font-bold px-5 py-3 rounded-xl shadow hover:bg-pink-50 active:scale-95 transition-all text-sm whitespace-nowrap cursor-pointer">
             {copied ? "Link Copiado! 📋" : "Copiar Link de Agendamento"}
           </button>
         </div>
@@ -337,7 +386,7 @@ export default function AdminDashboard() {
                       <div className="w-1/2"><label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Valor</label><input type="text" inputMode="numeric" value={price} onChange={handlePriceChange} className="w-full px-4 py-3.5 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-200 outline-none text-base" placeholder="R$ 0,00" /></div>
                       <div className="w-1/2"><label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Minutos</label><input type="number" inputMode="numeric" value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full px-4 py-3.5 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-200 outline-none text-base" placeholder="60" /></div>
                     </div>
-                    <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold py-4 rounded-xl hover:shadow-lg active:scale-[0.98] transition-all text-base mt-2">{loading ? "Salvando..." : "Salvar no Catálogo"}</button>
+                    <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold py-4 rounded-xl hover:shadow-lg active:scale-[0.98] transition-all text-base mt-2 cursor-pointer">{loading ? "Salvando..." : "Salvar no Catálogo"}</button>
                   </form>
                 </div>
               </div>
@@ -354,7 +403,7 @@ export default function AdminDashboard() {
                         </div>
                         <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
                           <span className="text-lg sm:text-xl font-extrabold text-slate-800 bg-slate-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl">R$ {service.price.toFixed(2).replace(".", ",")}</span>
-                          <button onClick={() => handleDeleteService(service.id)} className="text-red-400 hover:text-white bg-red-50 p-2.5 sm:p-3 rounded-xl hover:bg-red-500 active:scale-95 transition-all"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                          <button onClick={() => handleDeleteService(service.id)} className="text-red-400 hover:text-white bg-red-50 p-2.5 sm:p-3 rounded-xl hover:bg-red-500 active:scale-95 transition-all cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                         </div>
                       </div>
                     ))}
@@ -373,7 +422,7 @@ export default function AdminDashboard() {
                 <h3 className="text-xl font-bold text-slate-800">Próximos Agendamentos</h3>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none w-full sm:w-auto focus:ring-2 focus:ring-pink-300 transition-all" />
-                  {filterDate && <button onClick={() => setFilterDate("")} className="text-xs text-slate-500 bg-slate-100 px-3 py-2.5 rounded-xl font-bold hover:bg-slate-200 whitespace-nowrap transition-colors">Ver Todos</button>}
+                  {filterDate && <button onClick={() => setFilterDate("")} className="text-xs text-slate-500 bg-slate-100 px-3 py-2.5 rounded-xl font-bold hover:bg-slate-200 whitespace-nowrap transition-colors cursor-pointer">Ver Todos</button>}
                 </div>
               </div>
 
@@ -407,7 +456,7 @@ export default function AdminDashboard() {
                       const isBlocked = !!blockAppt; const isBooked = !!clientAppt;
 
                       return (
-                        <button key={time} type="button" disabled={blockLoading} onClick={() => handleToggleGridBlock(time, isBlocked, blockAppt?.id || null, isBooked)} className={`py-2 rounded-lg text-xs sm:text-sm font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 ${isBooked ? 'bg-pink-100 text-pink-700 border-pink-200 cursor-not-allowed' : isBlocked ? 'bg-slate-200 text-slate-500 border-slate-300 hover:bg-slate-300 line-through opacity-80' : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600'}`}>
+                        <button key={time} type="button" disabled={blockLoading} onClick={() => handleToggleGridBlock(time, isBlocked, blockAppt?.id || null, isBooked)} className={`py-2 rounded-lg text-xs sm:text-sm font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${isBooked ? 'bg-pink-100 text-pink-700 border-pink-200 cursor-not-allowed' : isBlocked ? 'bg-slate-200 text-slate-500 border-slate-300 hover:bg-slate-300 line-through opacity-80' : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600'}`}>
                           {time} {isBlocked && <span className="text-[10px] leading-none no-underline">🔒</span>} {isBooked && <span className="text-[10px] leading-none no-underline">💅</span>}
                         </button>
                       );
@@ -448,10 +497,10 @@ export default function AdminDashboard() {
                         {!isBlock && (
                           <>
                             <a href={`https://wa.me/55${appt.client_phone}?text=${whatsMessage}`} target="_blank" className="text-xs font-bold text-green-700 bg-green-50 px-3 py-2 rounded-xl hover:bg-green-100 transition-colors flex items-center gap-1.5 shadow-sm">WhatsApp</a>
-                            {appt.status !== 'Concluído' ? <button onClick={() => handleUpdateStatus(appt.id, 'Concluído')} className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">Concluir</button> : <button onClick={() => handleUpdateStatus(appt.id, 'Pendente')} className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl hover:bg-amber-100 transition-colors shadow-sm">Reabrir</button>}
+                            {appt.status !== 'Concluído' ? <button onClick={() => handleUpdateStatus(appt.id, 'Concluído')} className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">Concluir</button> : <button onClick={() => handleUpdateStatus(appt.id, 'Pendente')} className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl hover:bg-amber-100 transition-colors shadow-sm cursor-pointer">Reabrir</button>}
                           </>
                         )}
-                        <button onClick={() => handleDeleteAppointment(appt.id)} className={`text-xs font-bold px-3 py-2 rounded-xl transition-colors shadow-sm ${isBlock ? 'text-slate-700 bg-white border border-slate-300 hover:bg-slate-200' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}>{isBlock ? "Desbloquear" : "Excluir"}</button>
+                        <button onClick={() => handleDeleteAppointment(appt.id)} className={`text-xs font-bold px-3 py-2 rounded-xl transition-colors shadow-sm cursor-pointer ${isBlock ? 'text-slate-700 bg-white border border-slate-300 hover:bg-slate-200' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}>{isBlock ? "Desbloquear" : "Excluir"}</button>
                       </div>
                     </div>
                   )
@@ -504,7 +553,7 @@ export default function AdminDashboard() {
                     </select>
                   </div>
                 </div>
-                <button type="submit" disabled={savingConfig} className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold py-4 rounded-xl hover:shadow-lg active:scale-[0.98] transition-all text-base mt-4">
+                <button type="submit" disabled={savingConfig} className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold py-4 rounded-xl hover:shadow-lg active:scale-[0.98] transition-all text-base mt-4 cursor-pointer">
                   {savingConfig ? "Salvando..." : "Salvar Configurações"}
                 </button>
               </form>
