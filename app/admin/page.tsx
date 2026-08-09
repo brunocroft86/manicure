@@ -45,13 +45,17 @@ export default function AdminDashboard() {
 
   const [copied, setCopied] = useState(false);
 
-  // Links do WhatsApp Centralizados
-  const whatsAppNumber = "5521978308046";
+  // SUPORTE CENTRALIZADO (SEU NÚMERO NOVO)
+  const supportPhone = "5521920041540";
+  const supportMessage = encodeURIComponent(`Olá! Sou do estúdio *${profile?.business_name || ''}* e preciso de ajuda com o sistema BelezaPro.`);
+  const supportUrl = `https://wa.me/${supportPhone}?text=${supportMessage}`;
+
+  // Links de renovação/ativação usando o mesmo número de suporte
   const whatsAppMessageExpired = encodeURIComponent(`Olá! Minha assinatura do BelezaPro no estúdio *${profile?.business_name || ''}* venceu. Gostaria de renovar meu plano mensal!`);
-  const whatsAppUrlExpired = `https://wa.me/${whatsAppNumber}?text=${whatsAppMessageExpired}`;
+  const whatsAppUrlExpired = `https://wa.me/${supportPhone}?text=${whatsAppMessageExpired}`;
 
   const whatsAppMessageActivate = encodeURIComponent(`Olá! Estou gostando do BelezaPro no estúdio *${profile?.business_name || ''}* e quero ativar minha assinatura oficial agora!`);
-  const whatsAppUrlActivate = `https://wa.me/${whatsAppNumber}?text=${whatsAppMessageActivate}`;
+  const whatsAppUrlActivate = `https://wa.me/${supportPhone}?text=${whatsAppMessageActivate}`;
 
   useEffect(() => {
     checkUser();
@@ -231,7 +235,7 @@ export default function AdminDashboard() {
             href={whatsAppUrlExpired} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-4"
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-green-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-4"
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.88-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.396-.272.322-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" /></svg>
             Renovar pelo WhatsApp
@@ -286,16 +290,22 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <span className="text-sm font-bold text-slate-600 hidden sm:inline">{profile?.business_name}</span>
             
-            {(daysRemaining !== null && daysRemaining <= 3) && (
-              <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider hidden sm:inline">
-                Teste Grátis
-              </span>
-            )}
+            {/* BOTÃO DE SUPORTE RÁPIDO NO TOPO */}
+            <a 
+              href={supportUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="bg-green-50 hover:bg-green-100 text-green-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 border border-green-200 shadow-sm"
+              title="Falar com o Suporte"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.88-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.396-.272.322-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" /></svg>
+              <span>Suporte</span>
+            </a>
 
-            <button onClick={handleLogout} className="text-xs text-slate-400 bg-slate-100 hover:bg-slate-200 hover:text-slate-600 px-4 py-2.5 rounded-full font-bold transition-all active:scale-95">Sair</button>
+            <button onClick={handleLogout} className="text-xs text-slate-400 bg-slate-100 hover:bg-slate-200 hover:text-slate-600 px-3.5 py-2.5 rounded-full font-bold transition-all active:scale-95">Sair</button>
           </div>
         </div>
 
@@ -539,7 +549,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-3 w-full sm:w-auto justify-end pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex-wrap">
                         {!isBlock && (
                           <>
-                            <a href={`https://wa.me/55${appt.client_client_phone || appt.client_phone}?text=${whatsMessage}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-4 py-2.5 rounded-xl hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+                            <a href={`https://wa.me/55${appt.client_phone}?text=${whatsMessage}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-4 py-2.5 rounded-xl hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" /></svg> Contatar
                             </a>
                             {appt.status !== 'Concluído' 
@@ -562,9 +572,9 @@ export default function AdminDashboard() {
 
         {/* === ABA CONFIGURAÇÕES === */}
         {activeTab === "config" && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="bg-white p-6 sm:p-10 rounded-[2rem] shadow-sm border border-slate-200/60 max-w-2xl mx-auto">
-              
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-8 max-w-2xl mx-auto">
+            
+            <div className="bg-white p-6 sm:p-10 rounded-[2rem] shadow-sm border border-slate-200/60">
               <div className="mb-10 pb-10 border-b border-slate-100">
                 <h3 className="text-xl font-bold text-slate-900 mb-2">Personalização Visual</h3>
                 <p className="text-sm text-slate-500 mb-8">Envie a logo do seu estúdio para transmitir mais profissionalismo na sua página de agendamentos.</p>
@@ -617,6 +627,23 @@ export default function AdminDashboard() {
                 </form>
               </div>
             </div>
+
+            {/* CARD DE SUPORTE NA ABA CONFIGURAÇÕES */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 sm:p-8 rounded-[2rem] text-white shadow-lg shadow-green-200/50 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div>
+                <h3 className="text-xl font-bold">Precisa de Ajuda ou Suporte?</h3>
+                <p className="text-green-50 text-sm mt-1">Fale diretamente com o desenvolvedor para tirar dúvidas ou solicitar melhorias.</p>
+              </div>
+              <a 
+                href={supportUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-white text-green-700 hover:bg-green-50 font-bold px-6 py-3.5 rounded-xl shadow-md active:scale-95 transition-all text-sm whitespace-nowrap"
+              >
+                Chamar no WhatsApp
+              </a>
+            </div>
+
           </div>
         )}
       </main>
