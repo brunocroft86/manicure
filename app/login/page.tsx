@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+
+// Inicializa o cliente Supabase diretamente com as chaves públicas
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,9 +25,6 @@ export default function LoginPage() {
   
   const [loading, setLoading] = useState(false);
 
-  // Inicializa o cliente Supabase
-  const supabase = createClientComponentClient();
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -34,7 +37,6 @@ export default function LoginPage() {
       });
 
       if (error) {
-        // Tratamento de erro mais amigável
         if (error.message.includes("Invalid login credentials")) {
            alert("E-mail ou senha incorretos.");
         } else {
@@ -56,7 +58,6 @@ export default function LoginPage() {
         email,
         password,
         options: {
-            // Após confirmar o e-mail (se necessário), volta para o login
             emailRedirectTo: `${window.location.origin}/admin`,
         }
       });
@@ -64,33 +65,29 @@ export default function LoginPage() {
       if (authError) {
         alert("Erro ao criar conta: " + authError.message);
       } else if (authData.user) {
-        // 2. Gera um "slug" automático baseado no nome (Ex: "Studio da Bruna" vira "studio-da-bruna")
+        // 2. Gera um "slug" automático baseado no nome (Ex: "Studio Bela Unha" vira "studio-bela-unha")
         const slug = businessName
           .toLowerCase()
           .normalize("NFD")
           .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-          .replace(/[^a-z0-9]+/g, "-") // Troca espaços e especiais por traços
-          .replace(/(^-|-$)+/g, ""); // Remove traços do começo/fim
-
-        // Garante slug único adicionando um timestamp curto se necessário (melhoria futura seria checar no DB)
-        const finalSlug = slug + "-" + Date.now().toString().slice(-4);
+          .replace(/[^a-z0-9]+/g, "-") // Troca espaços por traços
+          .replace(/(^-|-$)+/g, ""); 
 
         // 3. Salva os dados públicos do salão na tabela "profiles"
         const { error: profileError } = await supabase.from("profiles").insert([
           {
             id: authData.user.id, // O mesmo ID da autenticação!
             business_name: businessName,
-            slug: finalSlug,
-            phone: whatsapp.replace(/\D/g, ""), // Salva só os números na coluna 'phone'
+            slug: slug,
+            phone: whatsapp.replace(/\D/g, ""), // Salva só os números
           },
         ]);
 
         if (profileError) {
-          console.error("Erro ao criar perfil:", profileError);
+          console.error(profileError);
           alert("Conta criada, mas houve um erro ao configurar o perfil. Tente fazer login.");
         } else {
           // Sucesso no cadastro e perfil
-          // Se o Supabase exigir confirmação de email, a mensagem aparecerá aqui
           if (authData.user.identities?.length === 0) {
              alert("Cadastro quase lá! Verifique seu e-mail para confirmar a conta antes de acessar.");
           } else {
@@ -131,7 +128,7 @@ export default function LoginPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Studio Bella Unha"
+                  placeholder="Ex: Studio Bela Unha"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
                   className="w-full px-5 py-3.5 bg-slate-50 text-slate-950 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition outline-none text-base"
@@ -174,7 +171,6 @@ export default function LoginPage() {
               className="w-full px-5 py-3.5 bg-slate-50 text-slate-950 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-300 focus:border-pink-400 transition outline-none text-base"
             />
             
-            {/* LINK DE RECUPERAÇÃO DE SENHA AQUI */}
             {isLogin && (
                 <div className="text-right pt-1.5">
                     <Link href="/recuperar-senha" className="text-xs font-medium text-pink-600 hover:text-pink-500 transition-colors">
@@ -200,13 +196,13 @@ export default function LoginPage() {
             <button 
               onClick={() => {
                   setIsLogin(!isLogin);
-                  // Limpa os campos ao alternar
+                  // Limpa os campos comuns ao alternar
                   setPassword("");
                   setEmail("");
               }}
               className="ml-2 text-pink-600 font-bold hover:text-pink-500 transition-colors"
             >
-              {isLogin ? "Cadastre-se grátis" : "Fazer login"}
+              {isLogin ? "Cadastre-se grátis" : "Faça login"}
             </button>
           </p>
         </div>

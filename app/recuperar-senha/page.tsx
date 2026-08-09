@@ -1,21 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+
+// Inicializa o cliente Supabase diretamente
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function RecuperarSenhaPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const supabase = createClientComponentClient();
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    // O Supabase envia o e-mail de recuperação. O link no e-mail apontará para /atualizar-senha
+    // O Supabase envia o e-mail de recuperação. redirectTo deve estar configurado no Supabase Dash.
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/atualizar-senha`,
     });
@@ -62,7 +67,7 @@ export default function RecuperarSenhaPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu.email@exemplo.com"
-              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition outline-none text-base"
               required
               disabled={loading}
             />

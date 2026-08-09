@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+// Inicializa o cliente Supabase diretamente
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export default function AtualizarSenhaPage() {
   const [password, setPassword] = useState("");
@@ -12,12 +18,12 @@ export default function AtualizarSenhaPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [isValidating, setIsValidating] = useState(true); // Estado para validar o token
   
-  const supabase = createClientComponentClient();
   const router = useRouter();
 
   // Ao carregar a página, o Supabase verifica se o hash da URL é um token de recuperação válido
   useEffect(() => {
     const checkSession = async () => {
+        // Pega a sessão atual, que o Supabase estabelece automaticamente através do token na URL
         const { data, error } = await supabase.auth.getSession();
         
         if (error || !data.session) {
@@ -28,7 +34,7 @@ export default function AtualizarSenhaPage() {
         setIsValidating(false);
     };
     checkSession();
-  }, [supabase]);
+  }, []);
 
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -57,7 +63,7 @@ export default function AtualizarSenhaPage() {
     } else {
       setMessage({ type: 'success', text: "Senha atualizada com sucesso! Redirecionando para o login..." });
       
-      // Logout automático por segurança e redireciona para o login
+      // Logout automático por segurança e redireciona para o login após 2 segundos
       await supabase.auth.signOut();
       setTimeout(() => {
         router.push("/login");
@@ -108,13 +114,13 @@ export default function AtualizarSenhaPage() {
 
         <form onSubmit={handleUpdatePassword} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1.5">Nova senha</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Nova senha (mínimo 6 caracteres)</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none text-base"
               required
               disabled={loading}
               minLength={6}
@@ -128,7 +134,7 @@ export default function AtualizarSenhaPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none"
+              className="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-700 text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition outline-none text-base"
               required
               disabled={loading}
               minLength={6}
