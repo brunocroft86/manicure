@@ -181,7 +181,12 @@ export default function PublicBookingPage() {
         `💰 *Valor:* R$ ${selectedService?.price.toFixed(2).replace(".", ",")}`
     );
 
-    const studioPhone = profile.phone || "5521978308046";
+    // CORREÇÃO APLICADA AQUI: Puxando o whatsapp do banco e validando o 55
+    let studioPhone = profile.whatsapp || "5521920041540";
+    if (!studioPhone.startsWith("55")) {
+      studioPhone = "55" + studioPhone;
+    }
+
     const whatsUrl = `https://wa.me/${studioPhone}?text=${whatsMsg}`;
 
     return (
