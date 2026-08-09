@@ -4,7 +4,7 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Otimização Mobile-First e PWA
+// Otimização Mobile-First, Viewport e PWA
 export const viewport: Viewport = {
   themeColor: "#ec4899", // A cor da barra de status no topo do celular
   width: "device-width",
@@ -14,8 +14,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "BelezaPro | Sistema de Agendamentos",
-  description: "Agende seus horários de forma rápida e prática.",
+  title: "BelezaPro | Sistema de Agendamentos Inteligente para Salões",
+  description: "A agenda inteligente que trabalha por você 24h. Organize horários, adicione serviços e permita que suas clientes agendem direto pelo celular.",
+  keywords: ["sistema para salao", "agenda para manicure", "aplicativo de agendamento", "belezapro", "salão de beleza"],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -23,9 +24,10 @@ export const metadata: Metadata = {
     title: "BelezaPro",
   },
   openGraph: {
-    title: "Agendamento Online",
-    description: "Escolha o serviço, a data e reserve seu horário em poucos segundos.",
+    title: "BelezaPro | Sistema de Agendamentos para Salões",
+    description: "Elimine a bagunça do WhatsApp e profissionalize seu estúdio por R$ 50/mês.",
     type: "website",
+    locale: "pt_BR",
   },
 };
 
