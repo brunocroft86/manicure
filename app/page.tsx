@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   const whatsAppNumber = "5521978308046";
-  const whatsAppMessage = encodeURIComponent("Olá! Vi o sistema BelezaPro por R$ 50/mês e quero começar meu teste grátis de 3 dias no meu salão!");
+  const whatsAppMessage = encodeURIComponent("Olá! Vi o sistema BelezaPro por R$ 50/mês, onde adiciono meus serviços e o sistema calcula tudo automático. Quero começar meu teste grátis de 3 dias!");
   const whatsAppUrl = `https://wa.me/${whatsAppNumber}?text=${whatsAppMessage}`;
 
   return (
@@ -53,7 +53,7 @@ export default function Home() {
         </h1>
 
         <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-2xl mx-auto font-medium">
-          Elimine a bagunça do WhatsApp e dê às suas clientes uma experiência de agendamento profissional por apenas <strong className="text-pink-600 font-extrabold">R$ 50 mensais</strong>.
+          Adicione seus serviços, valores e a duração de cada atendimento. <strong className="text-slate-900 font-bold">O sistema calcula todo o tempo restante e organiza sua agenda automaticamente</strong> por apenas <strong className="text-pink-600 font-extrabold">R$ 50 mensais</strong>.
         </p>
 
         {/* BOTÕES DE AÇÃO */}
@@ -82,8 +82,8 @@ export default function Home() {
           <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-3.5">
             <div className="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 font-bold">1</div>
             <div>
-              <h3 className="font-bold text-slate-800 text-sm sm:text-base">Zero Choque de Horários</h3>
-              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">O sistema calcula o tempo do serviço automaticamente.</p>
+              <h3 className="font-bold text-slate-800 text-sm sm:text-base">Cálculo Automático</h3>
+              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">O sistema gerencia os horários e o tempo restante para você.</p>
             </div>
           </div>
 
