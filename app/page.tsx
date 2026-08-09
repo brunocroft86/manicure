@@ -113,10 +113,14 @@ export default function Home() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-slate-950 border-t border-slate-900 py-8 text-center px-4 relative z-10">
+      <footer className="bg-slate-950 border-t border-slate-900 py-8 text-center px-4 relative z-10 flex flex-col sm:flex-row items-center justify-center gap-4">
         <p className="text-slate-500 text-sm font-medium">
           © {new Date().getFullYear()} BelezaPro. Todos os direitos reservados.
         </p>
+        <span className="hidden sm:inline text-slate-700">•</span>
+        <Link href="/termos" className="text-slate-400 hover:text-pink-400 text-sm font-semibold transition-colors">
+          Termos de Uso e Privacidade
+        </Link>
       </footer>
 
     </div>

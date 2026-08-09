@@ -114,6 +114,28 @@ export default function PublicBookingPage() {
     if (error) {
       alert("Erro ao realizar agendamento: " + error.message);
     } else {
+      // Formata a data para ficar bonita na mensagem (DD/MM/AAAA)
+      const [year, month, day] = selectedDate.split("-");
+      const formattedDate = `${day}/${month}/${year}`;
+
+      // Monta a mensagem automática para o WhatsApp do estúdio
+      const whatsMsg = encodeURIComponent(
+        `Olá! Gostaria de confirmar meu agendamento:\n\n` +
+        `👤 *Cliente:* ${clientName}\n` +
+        `💅 *Serviço:* ${selectedService.name}\n` +
+        `📅 *Data:* ${formattedDate}\n` +
+        `⏰ *Horário:* ${selectedTime}\n` +
+        `💰 *Valor:* R$ ${selectedService.price.toFixed(2).replace(".", ",")}`
+      );
+
+      // Pega o telefone do perfil do salão ou usa o padrão caso não esteja preenchido
+      const studioPhone = profile.phone || "5521978308046";
+      const whatsUrl = `https://wa.me/${studioPhone}?text=${whatsMsg}`;
+
+      // Abre o WhatsApp automaticamente para a cliente enviar a confirmação
+      window.open(whatsUrl, "_blank");
+
+      // Ativa a tela de sucesso
       setSuccess(true);
     }
   }
@@ -138,8 +160,11 @@ export default function PublicBookingPage() {
   }
 
   if (success) {
-    const whatsMsg = encodeURIComponent(`Olá! Acabei de agendar ${selectedService?.name} para o dia ${selectedDate.split("-").reverse().join("/")} às ${selectedTime} no estúdio *${profile.business_name}*.`);
-    const whatsUrl = `https://wa.me/55${profile.phone || '21978308046'}?text=${whatsMsg}`;
+    const [year, month, day] = selectedDate.split("-");
+    const formattedDate = `${day}/${month}/${year}`;
+    const whatsMsg = encodeURIComponent(`Olá! Gostaria de confirmar meu agendamento de ${selectedService?.name} para o dia ${formattedDate} às ${selectedTime} no estúdio *${profile.business_name}*.`);
+    const studioPhone = profile.phone || "5521978308046";
+    const whatsUrl = `https://wa.me/${studioPhone}?text=${whatsMsg}`;
 
     return (
       <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white flex items-center justify-center p-4">
@@ -159,7 +184,7 @@ export default function PublicBookingPage() {
             rel="noopener noreferrer"
             className="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-base py-4 rounded-2xl shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 mb-3"
           >
-            Avisar Estúdio no WhatsApp
+            Enviar Comprovante no WhatsApp
           </a>
           <button 
             onClick={() => { setSuccess(false); setSelectedService(null); setSelectedTime(""); setClientName(""); setClientPhone(""); }}
@@ -172,7 +197,7 @@ export default function PublicBookingPage() {
     );
   }
 
-  // Horários disponíveis (das 9h às 18h por exemplo, ou conforme config)
+  // Horários disponíveis
   const startH = profile.start_hour ?? 9;
   const endH = profile.end_hour ?? 18;
   const availableHours = [];
