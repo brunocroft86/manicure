@@ -12,7 +12,7 @@ const supabase = createClient(
 );
 
 // Função auxiliar para pegar a data de hoje no fuso de Brasília (YYYY-MM-DD)
-function getToday Brazil() {
+function getTodayBrazil() {
   // Cria data atual no fuso do servidor/navegador
   const now = new Date();
   // Converte para fuso de Brasília (UTC-3)
