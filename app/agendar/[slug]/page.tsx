@@ -3,16 +3,21 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
+// IMPORTAÇÕES NOVAS E CRUCIAIS DA DATE-FNS
+import { parseISO, format, isAfter, isBefore, parse, isSameDay, startOfDay } from "date-fns";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-function getTodayBrazil() {
-  const d = new Date();
-  d.setHours(d.getHours() - 3);
-  return d.toISOString().split('T')[0];
+// Função auxiliar para pegar a data de hoje no fuso de Brasília (YYYY-MM-DD)
+function getToday Brazil() {
+  // Cria data atual no fuso do servidor/navegador
+  const now = new Date();
+  // Converte para fuso de Brasília (UTC-3)
+  const brasiliaTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  return format(brasiliaTime, 'yyyy-MM-dd');
 }
 
 export default function PublicBookingPage() {
@@ -35,12 +40,21 @@ export default function PublicBookingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  // Estado para guardar a hora atual exata do fuso de Brasília para comparação
+  const [nowInBrasilia, setNowInBrasilia] = useState<Date>(new Date());
+
   useEffect(() => {
     if (slug) fetchStudioData();
   }, [slug]);
 
   useEffect(() => {
-    if (profile) fetchBookedTimes();
+    if (profile) {
+        fetchBookedTimes();
+        // Atualiza a hora atual de Brasília toda vez que muda a data para garantir precisão
+        const now = new Date();
+        const brasiliaTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+        setNowInBrasilia(brasiliaTime);
+    }
   }, [profile, selectedDate]);
 
   async function fetchStudioData() {
@@ -73,12 +87,14 @@ export default function PublicBookingPage() {
     if (!profile) return;
     const { data } = await supabase
       .from("appointments")
-      .select("*")
-      .eq("profile_id", profile.id);
+      .select("start_time, end_time") // Seleciona apenas o necessário
+      .eq("profile_id", profile.id)
+      // Filtra direto no Supabase por agendamentos da data selecionada (melhora performance)
+      .gte("start_time", `${selectedDate}T00:00:00`)
+      .lte("start_time", `${selectedDate}T23:59:59`);
 
     if (data) {
-      const filtered = data.filter(appt => appt.start_time?.startsWith(selectedDate));
-      setAppointments(filtered);
+      setAppointments(data);
     }
   }
 
@@ -87,6 +103,20 @@ export default function PublicBookingPage() {
     if (!selectedService || !selectedTime || !clientName || !clientPhone) {
       return alert("Por favor, preencha todos os campos e escolha o horário!");
     }
+
+    // --- DOUBLE CHECK DE SEGURANÇA NO FRONTEND ---
+    // Recalcula a hora atual de Brasília no momento do clique para evitar fraudes de tempo
+    const now = new Date();
+    const currentBrasiliaTime = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    
+    // Cria o objeto Date completo do agendamento solicitado
+    const selectedDateTime = parse(`${selectedDate} ${selectedTime}`, 'yyyy-MM-dd HH:mm', currentBrasiliaTime);
+
+    // Se o horário escolhido for ANTES de agora, bloqueia
+    if (isBefore(selectedDateTime, currentBrasiliaTime)) {
+        return alert("Ops! Este horário já passou. Por favor, escolha um horário futuro.");
+    }
+    // ---------------------------------------------
 
     setSubmitting(true);
 
@@ -114,28 +144,6 @@ export default function PublicBookingPage() {
     if (error) {
       alert("Erro ao realizar agendamento: " + error.message);
     } else {
-      // Formata a data para ficar bonita na mensagem (DD/MM/AAAA)
-      const [year, month, day] = selectedDate.split("-");
-      const formattedDate = `${day}/${month}/${year}`;
-
-      // Monta a mensagem automática para o WhatsApp do estúdio
-      const whatsMsg = encodeURIComponent(
-        `Olá! Gostaria de confirmar meu agendamento:\n\n` +
-        `👤 *Cliente:* ${clientName}\n` +
-        `💅 *Serviço:* ${selectedService.name}\n` +
-        `📅 *Data:* ${formattedDate}\n` +
-        `⏰ *Horário:* ${selectedTime}\n` +
-        `💰 *Valor:* R$ ${selectedService.price.toFixed(2).replace(".", ",")}`
-      );
-
-      // Pega o telefone do perfil do salão ou usa o padrão caso não esteja preenchido
-      const studioPhone = profile.phone || "5521978308046";
-      const whatsUrl = `https://wa.me/${studioPhone}?text=${whatsMsg}`;
-
-      // Abre o WhatsApp automaticamente para a cliente enviar a confirmação
-      window.open(whatsUrl, "_blank");
-
-      // Ativa a tela de sucesso
       setSuccess(true);
     }
   }
@@ -160,9 +168,19 @@ export default function PublicBookingPage() {
   }
 
   if (success) {
-    const [year, month, day] = selectedDate.split("-");
-    const formattedDate = `${day}/${month}/${year}`;
-    const whatsMsg = encodeURIComponent(`Olá! Gostaria de confirmar meu agendamento de ${selectedService?.name} para o dia ${formattedDate} às ${selectedTime} no estúdio *${profile.business_name}*.`);
+    // Formatação da data para DD/MM/AAAA
+    const formattedDate = format(parseISO(selectedDate), 'dd/MM/yyyy');
+    
+    // Monta a mensagem automática para o WhatsApp do estúdio
+    const whatsMsg = encodeURIComponent(
+        `Olá! Gostaria de confirmar meu agendamento:\n\n` +
+        `👤 *Cliente:* ${clientName}\n` +
+        `💅 *Serviço:* ${selectedService?.name}\n` +
+        `📅 *Data:* ${formattedDate}\n` +
+        `⏰ *Horário:* ${selectedTime}\n` +
+        `💰 *Valor:* R$ ${selectedService?.price.toFixed(2).replace(".", ",")}`
+    );
+
     const studioPhone = profile.phone || "5521978308046";
     const whatsUrl = `https://wa.me/${studioPhone}?text=${whatsMsg}`;
 
@@ -184,7 +202,7 @@ export default function PublicBookingPage() {
             rel="noopener noreferrer"
             className="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-base py-4 rounded-2xl shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 mb-3"
           >
-            Enviar Comprovante no WhatsApp
+            Enviar Comprovante no WhatsApp (Obrigatório)
           </a>
           <button 
             onClick={() => { setSuccess(false); setSelectedService(null); setSelectedTime(""); setClientName(""); setClientPhone(""); }}
@@ -197,7 +215,7 @@ export default function PublicBookingPage() {
     );
   }
 
-  // Horários disponíveis
+  // Geração de Horários disponíveis
   const startH = profile.start_hour ?? 9;
   const endH = profile.end_hour ?? 18;
   const availableHours = [];
@@ -206,10 +224,13 @@ export default function PublicBookingPage() {
     availableHours.push(`${String(i).padStart(2, '0')}:30`);
   }
 
+  // Lógica para verificar se a data selecionada é HOJE no fuso de Brasília
+  const isTodaySelected = isSameDay(parseISO(selectedDate), startOfDay(nowInBrasilia));
+
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-100/60 via-slate-50 to-white font-sans text-slate-800 pb-24">
       
-      {/* HEADER DO ESTÚDIO COM VIDA E COR */}
+      {/* HEADER DO ESTÚDIO */}
       <div className="bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white pt-12 pb-20 px-4 text-center shadow-xl relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent)] pointer-events-none"></div>
         <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
@@ -287,8 +308,13 @@ export default function PublicBookingPage() {
             <input 
               type="date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-pink-300 transition-all text-base"
+              // Impede selecionar datas retroativas no calendário do navegador
+              min={getTodayBrazil()}
+              onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setSelectedTime(""); // Limpa o horário ao mudar a data
+              }}
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-pink-300 transition-all text-base cursor-pointer"
             />
           </div>
 
@@ -300,34 +326,44 @@ export default function PublicBookingPage() {
                 const slotStartMins = (h * 60) + m;
                 const slotEndMins = slotStartMins + (selectedService?.duration_minutes || 30);
 
+                // 1. Verifica Ocupação (Lógica existente)
                 const isOccupied = appointments.some(appt => {
-                  let aStart = 0; let aEnd = 0;
-                  if (appt.start_time && appt.end_time) {
-                    const startPart = appt.start_time.split("T")[1].substring(0, 5);
-                    const endPart = appt.end_time.split("T")[1].substring(0, 5);
-                    aStart = parseInt(startPart.split(":")[0]) * 60 + parseInt(startPart.split(":")[1]);
-                    aEnd = parseInt(endPart.split(":")[0]) * 60 + parseInt(endPart.split(":")[1]);
-                  }
+                  if (!appt.start_time || !appt.end_time) return false;
+                  // start_time vem do DB como "YYYY-MM-DDTHH:mm:ss"
+                  const startPart = appt.start_time.split("T")[1].substring(0, 5);
+                  const endPart = appt.end_time.split("T")[1].substring(0, 5);
+                  const aStart = parseInt(startPart.split(":")[0]) * 60 + parseInt(startPart.split(":")[1]);
+                  const aEnd = parseInt(endPart.split(":")[0]) * 60 + parseInt(endPart.split(":")[1]);
                   return (slotStartMins < aEnd) && (slotEndMins > aStart);
                 });
 
+                // 2. CORREÇÃO: Verifica se o horário JÁ PASSOU (Lógica nova)
+                // Cria Date completo para o slot (YYYY-MM-DD HH:mm) no fuso de Brasília
+                const slotDateTime = parse(`${selectedDate} ${time}`, 'yyyy-MM-dd HH:mm', nowInBrasilia);
+                
+                // Se for hoje, verifica se o horário do slot é ANTES da hora atual de Brasília
+                const isInPast = isTodaySelected && isBefore(slotDateTime, nowInBrasilia);
+
+                // O botão deve ser desabilitado se estiver ocupado OU se já passou
+                const isDisabled = isOccupied || isInPast;
                 const isSelectedTime = selectedTime === time;
 
                 return (
                   <button
                     key={time}
                     type="button"
-                    disabled={isOccupied}
+                    disabled={isDisabled}
                     onClick={() => setSelectedTime(time)}
-                    className={`py-3.5 rounded-xl font-bold text-sm transition-all border-2 ${
-                      isOccupied 
-                        ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed line-through' 
+                    className={`py-3.5 rounded-xl font-bold text-sm transition-all border-2 flex flex-col items-center justify-center ${
+                      isDisabled 
+                        ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed line-through decorator-slate-300' 
                         : isSelectedTime 
                         ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200 scale-105' 
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600'
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600 hover:bg-pink-50/30'
                     }`}
                   >
                     {time}
+                    {isInPast && <span className="text-[10px] font-medium text-slate-400 line-through decoration-transparent">(Passou)</span>}
                   </button>
                 );
               })}
@@ -335,7 +371,7 @@ export default function PublicBookingPage() {
           </div>
         </div>
 
-        {/* PASSO 3: SEUS DADOS E CONFIRMAÇÃO */}
+        {/* PASSO 3: SEUS DADOS */}
         <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-xl shadow-pink-100/50 border border-pink-100/80">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-8 h-8 rounded-full bg-pink-500 text-white font-black text-sm flex items-center justify-center shadow-md shadow-pink-200">3</div>
@@ -371,9 +407,9 @@ export default function PublicBookingPage() {
               <button 
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white font-black text-lg py-5 rounded-2xl shadow-xl shadow-pink-200 hover:shadow-2xl hover:scale-[1.01] active:scale-[0.98] transition-all cursor-pointer"
+                className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white font-black text-lg py-5 rounded-2xl shadow-xl shadow-pink-200 hover:shadow-2xl hover:scale-[1.01] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {submitting ? "Confirmando Agendamento..." : "Confirmar Meu Horário 💅"}
+                {submitting ? "Confirmando..." : "Confirmar Meu Horário 💅"}
               </button>
             </div>
           </form>
