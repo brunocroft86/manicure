@@ -19,9 +19,9 @@ export const metadata: Metadata = {
   keywords: ["sistema para salao", "agenda para manicure", "aplicativo de agendamento", "belezapro", "salão de beleza"],
   manifest: "/manifest.json",
   
-  // AQUI: Força o navegador e celulares a lerem o seu Favicon e ícones
+  // AQUI: Força o navegador e celulares a lerem o seu Favicon em PNG (Mais confiável)
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icon-192.png", // <- Mudamos de favicon.ico para icon-192.png
     shortcut: "/icon-192.png",
     apple: "/icon-192.png",
   },
