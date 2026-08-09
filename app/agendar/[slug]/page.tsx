@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-// IMPORTAÇÕES NOVAS E CRUCIAIS DA DATE-FNS
 import { parseISO, format, isAfter, isBefore, parse, isSameDay, startOfDay } from "date-fns";
 
 const supabase = createClient(
@@ -168,27 +167,6 @@ export default function PublicBookingPage() {
   }
 
   if (success) {
-    // Formatação da data para DD/MM/AAAA
-    const formattedDate = format(parseISO(selectedDate), 'dd/MM/yyyy');
-    
-    // Monta a mensagem automática para o WhatsApp do estúdio
-    const whatsMsg = encodeURIComponent(
-        `Olá! Gostaria de confirmar meu agendamento:\n\n` +
-        `👤 *Cliente:* ${clientName}\n` +
-        `💅 *Serviço:* ${selectedService?.name}\n` +
-        `📅 *Data:* ${formattedDate}\n` +
-        `⏰ *Horário:* ${selectedTime}\n` +
-        `💰 *Valor:* R$ ${selectedService?.price.toFixed(2).replace(".", ",")}`
-    );
-
-    // CORREÇÃO APLICADA AQUI: Puxando o whatsapp do banco e validando o 55
-    let studioPhone = profile.whatsapp || "5521920041540";
-    if (!studioPhone.startsWith("55")) {
-      studioPhone = "55" + studioPhone;
-    }
-
-    const whatsUrl = `https://wa.me/${studioPhone}?text=${whatsMsg}`;
-
     return (
       <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white flex items-center justify-center p-4">
         <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center border border-pink-100 animate-in zoom-in-95 duration-300">
@@ -201,17 +179,9 @@ export default function PublicBookingPage() {
           <p className="text-slate-600 text-sm mb-8 font-medium">
             Seu horário para <strong>{selectedService?.name}</strong> foi reservado com sucesso no estúdio <strong>{profile.business_name}</strong>.
           </p>
-          <a 
-            href={whatsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-base py-4 rounded-2xl shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 mb-3"
-          >
-            Enviar Comprovante no WhatsApp (Obrigatório)
-          </a>
           <button 
             onClick={() => { setSuccess(false); setSelectedService(null); setSelectedTime(""); setClientName(""); setClientPhone(""); }}
-            className="text-slate-400 font-bold text-xs hover:text-slate-600 transition-colors"
+            className="w-full bg-pink-500 hover:bg-pink-600 text-white font-extrabold text-base py-4 rounded-2xl shadow-lg shadow-pink-200 transition-all flex items-center justify-center gap-2 mb-3"
           >
             Fazer outro agendamento
           </button>
