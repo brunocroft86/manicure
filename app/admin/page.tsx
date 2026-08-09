@@ -25,7 +25,8 @@ export default function AdminDashboard() {
   const [isExpired, setIsExpired] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"catalogo" | "agenda" | "config">("catalogo");
+  // NOVO: Adicionado "relatorios" na lista de abas
+  const [activeTab, setActiveTab] = useState<"catalogo" | "agenda" | "relatorios" | "config">("catalogo");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [name, setName] = useState("");
@@ -45,12 +46,18 @@ export default function AdminDashboard() {
 
   const [copied, setCopied] = useState(false);
 
-  // SUPORTE CENTRALIZADO (SEU NÚMERO NOVO)
+  // NOVO: Estados para os filtros do Relatório
+  const [reportStartDate, setReportStartDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1); // Começa no dia 1 do mês atual
+    return d.toISOString().split('T')[0];
+  });
+  const [reportEndDate, setReportEndDate] = useState(getTodayBrazil());
+
   const supportPhone = "5521920041540";
   const supportMessage = encodeURIComponent(`Olá! Sou do estúdio *${profile?.business_name || ''}* e preciso de ajuda com o sistema BelezaPro.`);
   const supportUrl = `https://wa.me/${supportPhone}?text=${supportMessage}`;
 
-  // Links de renovação/ativação usando o mesmo número de suporte
   const whatsAppMessageExpired = encodeURIComponent(`Olá! Minha assinatura do BelezaPro no estúdio *${profile?.business_name || ''}* venceu. Gostaria de renovar meu plano mensal!`);
   const whatsAppUrlExpired = `https://wa.me/${supportPhone}?text=${whatsAppMessageExpired}`;
 
@@ -152,8 +159,10 @@ export default function AdminDashboard() {
   async function handleToggleGridBlock(time: string, isBlocked: boolean, blockId: string | null, isBooked: boolean) {
     if (isBooked) return alert("Horário já ocupado por uma cliente. Cancele primeiro se precisar bloquear.");
     setBlockLoading(true);
+    
     if (isBlocked && blockId) {
-      await supabase.from("appointments").delete().eq("id", blockId);
+      const { error } = await supabase.from("appointments").delete().eq("id", blockId);
+      if (error) alert("Erro ao desbloquear: " + error.message);
     } else {
       const startDateTimeString = `${filterDate}T${time}:00`;
       const [h, m] = time.split(":").map(Number);
@@ -162,12 +171,25 @@ export default function AdminDashboard() {
       const endH = Math.floor(endMins / 60);
       const endM = endMins % 60;
       const endDateTimeString = `${filterDate}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`;
+      
       const safeServiceId = services.length > 0 ? services[0].id : null;
 
-      await supabase.from("appointments").insert([{
+      if (!safeServiceId) {
+        alert("⚠️ Você precisa cadastrar pelo menos 1 serviço no seu Catálogo antes de poder bloquear horários na agenda.");
+        setBlockLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.from("appointments").insert([{
         profile_id: user.id, service_id: safeServiceId, client_name: "🔒 BLOQUEIO", client_phone: "00000000000", start_time: startDateTimeString, end_time: endDateTimeString, status: "Bloqueado",
       }]);
+
+      if (error) {
+        console.error("Erro Supabase:", error);
+        alert("Erro no banco de dados ao bloquear: " + error.message);
+      }
     }
+    
     await fetchAppointments(user.id);
     setBlockLoading(false);
   }
@@ -248,17 +270,50 @@ export default function AdminDashboard() {
     );
   }
 
+  // Filtro para a Aba Agenda
   const filteredAppointments = appointments.filter(appt => {
     if (!filterDate) return true;
     const apptDate = appt.start_time?.split("T")[0];
     return apptDate === filterDate;
   });
 
+  // Geração de Horários da Grade
   const availableHours = [];
   for (let i = parseInt(startHour); i < parseInt(endHour); i++) {
     availableHours.push(`${String(i).padStart(2, '0')}:00`);
     availableHours.push(`${String(i).padStart(2, '0')}:30`);
   }
+
+  // --- LÓGICA DA NOVA ABA DE RELATÓRIOS ---
+  // Filtra agendamentos reais (tira os bloqueios) dentro das datas escolhidas
+  const reportAppointments = appointments.filter(appt => {
+    if (appt.client_name === "🔒 BLOQUEIO" || appt.status === "Bloqueado") return false;
+    if (!appt.start_time) return false;
+    const apptDate = appt.start_time.split("T")[0];
+    const isAfterStart = !reportStartDate || apptDate >= reportStartDate;
+    const isBeforeEnd = !reportEndDate || apptDate <= reportEndDate;
+    return isAfterStart && isBeforeEnd;
+  }).sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()); // Do mais recente para o mais antigo
+
+  // Separa apenas os que foram finalizados para somar o dinheiro
+  const completedAppointments = reportAppointments.filter(appt => appt.status === "Concluído");
+  const totalRevenue = completedAppointments.reduce((acc, appt) => acc + (appt.service?.price || 0), 0);
+  const totalClients = completedAppointments.length;
+
+  // Descobre o serviço campeão de vendas
+  const serviceCounts: Record<string, number> = {};
+  let topService = "Nenhum";
+  let maxCount = 0;
+  completedAppointments.forEach(appt => {
+    const sName = appt.service?.name;
+    if (sName) {
+      serviceCounts[sName] = (serviceCounts[sName] || 0) + 1;
+      if (serviceCounts[sName] > maxCount) {
+        maxCount = serviceCounts[sName];
+        topService = sName;
+      }
+    }
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
@@ -271,14 +326,9 @@ export default function AdminDashboard() {
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors md:hidden focus:outline-none"
-              aria-label="Abrir Menu"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                {mobileMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                )}
+                {mobileMenuOpen ? <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />}
               </svg>
             </button>
 
@@ -293,14 +343,11 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 sm:gap-4">
             <span className="text-sm font-bold text-slate-600 hidden sm:inline">{profile?.business_name}</span>
             
-            {/* BOTÃO DE SUPORTE RÁPIDO NO TOPO */}
-            <a 
-              href={supportUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="bg-green-50 hover:bg-green-100 text-green-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 border border-green-200 shadow-sm"
-              title="Falar com o Suporte"
-            >
+            {(daysRemaining !== null && daysRemaining <= 3) && (
+              <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider hidden sm:inline">Teste Grátis</span>
+            )}
+
+            <a href={supportUrl} target="_blank" rel="noreferrer" className="bg-green-50 hover:bg-green-100 text-green-700 text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all flex items-center gap-1.5 border border-green-200 shadow-sm" title="Falar com o Suporte">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.88-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.396-.272.322-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" /></svg>
               <span>Suporte</span>
             </a>
@@ -309,39 +356,25 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* NAVEGAÇÃO DESKTOP */}
+        {/* NAVEGAÇÃO DESKTOP (AGORA COM 4 ABAS) */}
         <div className="hidden md:flex max-w-7xl mx-auto px-6 gap-8 pt-1">
           <button onClick={() => setActiveTab("catalogo")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "catalogo" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Catálogo de Serviços</button>
           <button onClick={() => setActiveTab("agenda")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "agenda" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Agenda e Horários</button>
+          <button onClick={() => setActiveTab("relatorios")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "relatorios" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Relatórios e Finanças</button>
           <button onClick={() => setActiveTab("config")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "config" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Configurações</button>
         </div>
 
-        {/* MENU MOBILE */}
+        {/* MENU MOBILE (AGORA COM 4 ABAS) */}
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-2xl py-5 px-6 space-y-3 animate-in slide-in-from-top duration-200 z-50">
             <div className="pb-3 mb-3 border-b border-slate-100">
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Logado como</p>
               <p className="text-lg font-black text-slate-800">{profile?.business_name}</p>
             </div>
-
-            <button 
-              onClick={() => { setActiveTab("catalogo"); setMobileMenuOpen(false); }}
-              className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "catalogo" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}
-            >
-              <span className="text-lg">🛍️</span> Catálogo de Serviços
-            </button>
-            <button 
-              onClick={() => { setActiveTab("agenda"); setMobileMenuOpen(false); }}
-              className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "agenda" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}
-            >
-              <span className="text-lg">📅</span> Agenda e Horários
-            </button>
-            <button 
-              onClick={() => { setActiveTab("config"); setMobileMenuOpen(false); }}
-              className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "config" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}
-            >
-              <span className="text-lg">⚙️</span> Configurações
-            </button>
+            <button onClick={() => { setActiveTab("catalogo"); setMobileMenuOpen(false); }} className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "catalogo" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}><span className="text-lg">🛍️</span> Catálogo de Serviços</button>
+            <button onClick={() => { setActiveTab("agenda"); setMobileMenuOpen(false); }} className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "agenda" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}><span className="text-lg">📅</span> Agenda e Horários</button>
+            <button onClick={() => { setActiveTab("relatorios"); setMobileMenuOpen(false); }} className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "relatorios" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}><span className="text-lg">📊</span> Relatórios e Finanças</button>
+            <button onClick={() => { setActiveTab("config"); setMobileMenuOpen(false); }} className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "config" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}><span className="text-lg">⚙️</span> Configurações</button>
           </div>
         )}
       </header>
@@ -361,14 +394,7 @@ export default function AdminDashboard() {
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   <span><strong>Período de Teste:</strong> Restam {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'}.</span>
                 </div>
-                <a 
-                  href={whatsAppUrlActivate}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm shadow-amber-200 w-full sm:w-auto text-center active:scale-95"
-                >
-                  Ativar Assinatura
-                </a>
+                <a href={whatsAppUrlActivate} target="_blank" rel="noopener noreferrer" className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm shadow-amber-200 w-full sm:w-auto text-center active:scale-95">Ativar Assinatura</a>
               </>
             ) : (
               <div className="flex items-center justify-center gap-2.5 w-full">
@@ -392,9 +418,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <button onClick={handleCopyLink} className="relative z-10 w-full sm:w-auto bg-white text-slate-900 hover:text-pink-600 font-bold px-6 py-3.5 rounded-xl shadow-lg hover:bg-slate-50 active:scale-95 transition-all text-sm whitespace-nowrap cursor-pointer flex items-center justify-center gap-2">
-            {copied ? (
-              <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> Copiado!</>
-            ) : "Copiar Link"}
+            {copied ? <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> Copiado!</> : "Copiar Link"}
           </button>
         </div>
 
@@ -567,6 +591,106 @@ export default function AdminDashboard() {
                 })}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* === NOVA ABA: RELATÓRIOS E FINANÇAS === */}
+        {activeTab === "relatorios" && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300 max-w-5xl mx-auto">
+            
+            {/* Filtros Superiores */}
+            <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-200/60 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900">Visão Geral</h3>
+                <p className="text-sm text-slate-500 mt-1">Acompanhe seu faturamento e atendimentos.</p>
+              </div>
+              <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2 w-full sm:w-auto bg-slate-50 p-2 rounded-xl border border-slate-200">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">De</span>
+                  <input type="date" value={reportStartDate} onChange={(e) => setReportStartDate(e.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none w-full sm:w-auto focus:ring-2 focus:ring-pink-200 transition-all cursor-pointer" />
+                </div>
+                <div className="flex items-center gap-2 w-full sm:w-auto bg-slate-50 p-2 rounded-xl border border-slate-200">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider pl-2">Até</span>
+                  <input type="date" value={reportEndDate} onChange={(e) => setReportEndDate(e.target.value)} className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none w-full sm:w-auto focus:ring-2 focus:ring-pink-200 transition-all cursor-pointer" />
+                </div>
+              </div>
+            </div>
+
+            {/* Cartões de Resumo */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-6 rounded-[2rem] text-white shadow-lg shadow-green-200/50 relative overflow-hidden">
+                <div className="absolute top-4 right-4 bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <p className="text-green-50 text-sm font-bold uppercase tracking-wider mb-2">Faturamento Total</p>
+                <h2 className="text-3xl sm:text-4xl font-black">R$ {totalRevenue.toFixed(2).replace('.', ',')}</h2>
+                <p className="text-green-100 text-xs mt-3 opacity-90">Apenas serviços Concluídos</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-6 rounded-[2rem] text-white shadow-lg shadow-blue-200/50 relative overflow-hidden">
+                <div className="absolute top-4 right-4 bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                </div>
+                <p className="text-blue-50 text-sm font-bold uppercase tracking-wider mb-2">Atendimentos</p>
+                <h2 className="text-3xl sm:text-4xl font-black">{totalClients}</h2>
+                <p className="text-blue-100 text-xs mt-3 opacity-90">Clientes finalizadas no período</p>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-500 to-pink-600 p-6 rounded-[2rem] text-white shadow-lg shadow-purple-200/50 relative overflow-hidden">
+                <div className="absolute top-4 right-4 bg-white/20 p-3 rounded-2xl backdrop-blur-sm">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                </div>
+                <p className="text-purple-50 text-sm font-bold uppercase tracking-wider mb-2">Serviço Favorito</p>
+                <h2 className="text-xl sm:text-2xl font-black truncate pr-12">{topService}</h2>
+                <p className="text-purple-100 text-xs mt-3 opacity-90">O que mais saiu no estúdio</p>
+              </div>
+            </div>
+
+            {/* Histórico Detalhado */}
+            <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-200/60">
+              <h3 className="text-xl font-bold text-slate-900 mb-6">Histórico de Clientes</h3>
+              
+              <div className="space-y-4">
+                {reportAppointments.length === 0 ? (
+                  <div className="text-center py-16 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200">
+                    <p className="text-slate-400 font-medium text-base">Nenhum agendamento encontrado neste período.</p>
+                  </div>
+                ) : (
+                  reportAppointments.map((appt) => {
+                    let timePart = "00:00"; let datePart = "2026-01-01";
+                    if (appt.start_time && appt.start_time.includes("T")) {
+                      datePart = appt.start_time.split("T")[0];
+                      timePart = appt.start_time.split("T")[1].substring(0, 5); 
+                    }
+                    const [year, month, day] = datePart.split("-");
+                    const isCompleted = appt.status === "Concluído";
+
+                    return (
+                      <div key={appt.id} className="flex flex-col sm:flex-row p-5 rounded-2xl border border-slate-100 hover:border-pink-200 transition-all bg-white gap-4 justify-between items-start sm:items-center hover:shadow-sm">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0 ${isCompleted ? 'bg-green-50 text-green-600' : 'bg-slate-100 text-slate-500'}`}>
+                            {day}/{month}
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-slate-800 leading-tight">{appt.client_name}</h4>
+                            <p className="text-xs font-medium text-slate-500 mt-0.5">{appt.service?.name} • {timePart}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50 gap-4">
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                            {appt.status || 'Pendente'}
+                          </span>
+                          <span className={`font-black ${isCompleted ? 'text-green-600' : 'text-slate-400'}`}>
+                            R$ {appt.service?.price?.toFixed(2).replace('.', ',')}
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </div>
+
           </div>
         )}
 
