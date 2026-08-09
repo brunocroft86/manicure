@@ -44,6 +44,14 @@ export default function AdminDashboard() {
 
   const [copied, setCopied] = useState(false);
 
+  // Links do WhatsApp Centralizados
+  const whatsAppNumber = "5521978308046";
+  const whatsAppMessageExpired = encodeURIComponent(`Olá! Minha assinatura do BelezaPro no estúdio *${profile?.business_name || ''}* venceu. Gostaria de renovar meu plano mensal!`);
+  const whatsAppUrlExpired = `https://wa.me/${whatsAppNumber}?text=${whatsAppMessageExpired}`;
+
+  const whatsAppMessageActivate = encodeURIComponent(`Olá! Estou gostando do BelezaPro no estúdio *${profile?.business_name || ''}* e quero ativar minha assinatura oficial agora!`);
+  const whatsAppUrlActivate = `https://wa.me/${whatsAppNumber}?text=${whatsAppMessageActivate}`;
+
   useEffect(() => {
     checkUser();
   }, []);
@@ -200,10 +208,6 @@ export default function AdminDashboard() {
   if (authLoading) return <div className="min-h-screen bg-pink-50 flex items-center justify-center text-pink-500 font-bold animate-pulse">Carregando painel...</div>;
 
   if (isExpired) {
-    const whatsAppNumber = "5521978308046";
-    const whatsAppMessage = encodeURIComponent(`Olá! Minha assinatura do BelezaPro no estúdio *${profile?.business_name}* venceu. Gostaria de renovar meu plano mensal!`);
-    const whatsAppUrl = `https://wa.me/${whatsAppNumber}?text=${whatsAppMessage}`;
-
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="bg-white p-8 sm:p-10 rounded-3xl max-w-lg w-full text-center shadow-2xl relative overflow-hidden">
@@ -218,7 +222,7 @@ export default function AdminDashboard() {
             Sua assinatura do BelezaPro expirou. Renove agora para reativar seu sistema, recuperar seus agendamentos e continuar recebendo clientes online.
           </p>
           <a 
-            href={whatsAppUrl} 
+            href={whatsAppUrlExpired} 
             target="_blank" 
             rel="noopener noreferrer"
             className="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-lg py-4 rounded-xl shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 mb-4"
@@ -260,7 +264,6 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3 sm:gap-4">
               <span className="text-sm font-bold text-slate-700 hidden sm:inline">{profile?.business_name}</span>
               
-              {/* SELO DE AVISO NO CABEÇALHO */}
               {(daysRemaining !== null && daysRemaining <= 3) && (
                 <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase hidden sm:inline">
                   Teste Grátis
@@ -280,23 +283,33 @@ export default function AdminDashboard() {
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
         
-        {/* BANNER DINÂMICO DE VENCIMENTO / TESTE GRÁTIS */}
+        {/* BANNER DINÂMICO DE VENCIMENTO / TESTE GRÁTIS COM BOTÃO DE ATIVAÇÃO */}
         {profile?.subscription_expires_at && (
-          <div className={`px-4 py-3 rounded-2xl mb-6 flex items-center justify-center gap-2 text-sm font-medium border shadow-sm ${
+          <div className={`px-4 py-3 sm:py-4 rounded-2xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm font-medium border shadow-sm ${
             (daysRemaining !== null && daysRemaining <= 3) 
               ? "bg-amber-50 border-amber-200 text-amber-800" 
               : "bg-blue-50 border-blue-200 text-blue-700"
           }`}>
             {(daysRemaining !== null && daysRemaining <= 3) ? (
               <>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span><strong>Período de Teste Grátis:</strong> Restam apenas {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'} para testar.</span>
+                <div className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span><strong>Período de Teste Grátis:</strong> Restam apenas {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'}.</span>
+                </div>
+                <a 
+                  href={whatsAppUrlActivate}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-1.5 rounded-lg transition-colors whitespace-nowrap shadow-sm text-xs sm:text-sm"
+                >
+                  Ativar Assinatura
+                </a>
               </>
             ) : (
-              <>
+              <div className="flex items-center justify-center gap-2 w-full">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span>Sua assinatura é válida até: <strong>{new Date(profile.subscription_expires_at).toLocaleDateString('pt-BR')}</strong></span>
-              </>
+              </div>
             )}
           </div>
         )}
