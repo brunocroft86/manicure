@@ -9,116 +9,92 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function AgendarPage() {
+function getTodayBrazil() {
+  const d = new Date();
+  d.setHours(d.getHours() - 3);
+  return d.toISOString().split('T')[0];
+}
+
+export default function PublicBookingPage() {
   const params = useParams();
-  const slug = params.slug as string;
+  const slug = params?.slug;
 
   const [profile, setProfile] = useState<any>(null);
   const [services, setServices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
+  // Estados do Agendamento
   const [selectedService, setSelectedService] = useState<any>(null);
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(getTodayBrazil());
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [selectedTime, setSelectedTime] = useState("");
+  
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
-  
-  const [alertMessage, setAlertMessage] = useState("");
-  
-  const [bookedIntervals, setBookedIntervals] = useState<{startMins: number, endMins: number}[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     if (slug) fetchStudioData();
   }, [slug]);
 
   useEffect(() => {
-    if (selectedDate && profile) {
-      fetchBookedTimes(selectedDate);
-      setSelectedTime("");
-    }
-  }, [selectedDate, profile]);
-
-  useEffect(() => {
-    setSelectedTime("");
-  }, [selectedService]);
+    if (profile) fetchBookedTimes();
+  }, [profile, selectedDate]);
 
   async function fetchStudioData() {
-    const { data: profileData } = await supabase
+    setLoading(true);
+    const { data: profileData, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("slug", slug)
       .single();
 
-    if (profileData) {
-      setProfile(profileData);
-      
-      // SEO Dinâmico: Altera o título da aba do navegador
-      document.title = `${profileData.business_name} | Agendamento Online`;
-
-      const { data: servicesData } = await supabase
-        .from("services")
-        .select("*")
-        .eq("profile_id", profileData.id)
-        .order("created_at", { ascending: false });
-      
-      if (servicesData) {
-        setServices(servicesData);
-      }
+    if (error || !profileData) {
+      setNotFound(true);
+      setLoading(false);
+      return;
     }
+
+    setProfile(profileData);
+
+    const { data: servicesData } = await supabase
+      .from("services")
+      .select("*")
+      .eq("profile_id", profileData.id)
+      .order("created_at", { ascending: false });
+
+    if (servicesData) setServices(servicesData);
     setLoading(false);
   }
 
-  async function fetchBookedTimes(date: string) {
+  async function fetchBookedTimes() {
+    if (!profile) return;
     const { data } = await supabase
       .from("appointments")
-      .select("start_time, end_time")
+      .select("*")
       .eq("profile_id", profile.id);
 
     if (data) {
-      const intervals = data
-        .filter(appt => appt.start_time && appt.end_time)
-        .map(appt => {
-          const startDatePart = appt.start_time.substring(0, 10);
-          if (startDatePart !== date) return null;
-
-          const tIndex = appt.start_time.indexOf("T");
-          const startStr = appt.start_time.substring(tIndex + 1, tIndex + 6);
-          const endTIndex = appt.end_time.indexOf("T");
-          const endStr = appt.end_time.substring(endTIndex + 1, endTIndex + 6);
-
-          const [sH, sM] = startStr.split(":").map(Number);
-          const [eH, eM] = endStr.split(":").map(Number);
-
-          return {
-            startMins: (sH * 60) + sM,
-            endMins: (eH * 60) + eM
-          };
-        })
-        .filter(Boolean);
-
-      setBookedIntervals(intervals as {startMins: number, endMins: number}[]);
+      const filtered = data.filter(appt => appt.start_time?.startsWith(selectedDate));
+      setAppointments(filtered);
     }
   }
 
   async function handleBooking(e: React.FormEvent) {
     e.preventDefault();
-    
-    if (!selectedService) return setAlertMessage("Selecione um serviço para continuar.");
-    if (!selectedDate) return setAlertMessage("Selecione uma data para o agendamento.");
-    if (!selectedTime) return setAlertMessage("Escolha um dos horários disponíveis.");
-    if (!clientName || !clientPhone) return setAlertMessage("Por favor, preencha seu nome e WhatsApp.");
+    if (!selectedService || !selectedTime || !clientName || !clientPhone) {
+      return alert("Por favor, preencha todos os campos e escolha o horário!");
+    }
 
     setSubmitting(true);
 
     const startDateTimeString = `${selectedDate}T${selectedTime}:00`;
-    
     const [h, m] = selectedTime.split(":").map(Number);
     const startMins = (h * 60) + m;
-    const duration = selectedService.duration_minutes || 60;
+    const duration = selectedService.duration_minutes || 30;
     const endMins = startMins + duration;
-    
     const endH = Math.floor(endMins / 60);
     const endM = endMins % 60;
     const endDateTimeString = `${selectedDate}T${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}:00`;
@@ -127,39 +103,76 @@ export default function AgendarPage() {
       profile_id: profile.id,
       service_id: selectedService.id,
       client_name: clientName,
-      client_phone: clientPhone,
+      client_phone: clientPhone.replace(/\D/g, ""),
       start_time: startDateTimeString,
       end_time: endDateTimeString,
-      status: "Pendente",
+      status: "Pendente"
     }]);
 
     setSubmitting(false);
 
     if (error) {
-      setAlertMessage("Erro ao agendar: " + error.message);
+      alert("Erro ao realizar agendamento: " + error.message);
     } else {
       setSuccess(true);
-      fetchBookedTimes(selectedDate);
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-pink-50 flex items-center justify-center text-pink-500 font-bold animate-pulse">
-        Carregando estúdio...
+      <div className="min-h-screen bg-pink-50 flex items-center justify-center">
+        <div className="text-pink-500 font-extrabold text-lg animate-pulse">Carregando estúdio...</div>
       </div>
     );
   }
 
-  if (!profile) {
+  if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
-        <h1 className="text-2xl font-bold text-slate-800 mb-2">Estúdio não encontrado</h1>
-        <p className="text-slate-500 text-sm">Verifique o link e tente novamente.</p>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full border border-pink-100">
+          <h1 className="text-2xl font-black text-slate-800 mb-2">Estúdio não encontrado</h1>
+          <p className="text-slate-500 text-sm">O link que você acessou pode estar incorreto ou desativado.</p>
+        </div>
       </div>
     );
   }
 
+  if (success) {
+    const whatsMsg = encodeURIComponent(`Olá! Acabei de agendar ${selectedService?.name} para o dia ${selectedDate.split("-").reverse().join("/")} às ${selectedTime} no estúdio *${profile.business_name}*.`);
+    const whatsUrl = `https://wa.me/55${profile.phone || '21978308046'}?text=${whatsMsg}`;
+
+    return (
+      <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white flex items-center justify-center p-4">
+        <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-2xl max-w-md w-full text-center border border-pink-100 animate-in zoom-in-95 duration-300">
+          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">Agendamento Confirmado!</h1>
+          <p className="text-slate-600 text-sm mb-8 font-medium">
+            Seu horário para <strong>{selectedService?.name}</strong> foi reservado com sucesso no estúdio <strong>{profile.business_name}</strong>.
+          </p>
+          <a 
+            href={whatsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-base py-4 rounded-2xl shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 mb-3"
+          >
+            Avisar Estúdio no WhatsApp
+          </a>
+          <button 
+            onClick={() => { setSuccess(false); setSelectedService(null); setSelectedTime(""); setClientName(""); setClientPhone(""); }}
+            className="text-slate-400 font-bold text-xs hover:text-slate-600 transition-colors"
+          >
+            Fazer outro agendamento
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Horários disponíveis (das 9h às 18h por exemplo, ou conforme config)
   const startH = profile.start_hour ?? 9;
   const endH = profile.end_hour ?? 18;
   const availableHours = [];
@@ -169,215 +182,179 @@ export default function AgendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white font-sans text-slate-800 pb-20">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-100/60 via-slate-50 to-white font-sans text-slate-800 pb-24">
       
-      {/* CABEÇALHO COMPACTO OTIMIZADO PARA MOBILE */}
-      <header className="bg-white/80 backdrop-blur-md border-b border-pink-100 py-3 sm:py-5 px-4 text-center shadow-sm sticky top-0 z-10">
-        <div className="max-w-2xl mx-auto">
-          
+      {/* HEADER DO ESTÚDIO COM VIDA E COR */}
+      <div className="bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white pt-12 pb-20 px-4 text-center shadow-xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent)] pointer-events-none"></div>
+        <div className="relative z-10 max-w-2xl mx-auto flex flex-col items-center">
           {profile.logo_url ? (
-            <img 
-              src={profile.logo_url} 
-              alt={`Logo de ${profile.business_name}`} 
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl mx-auto shadow-sm shadow-pink-200 mb-1.5 sm:mb-2 object-cover border-2 border-white"
-            />
+            <img src={profile.logo_url} alt={profile.business_name} className="w-24 h-24 rounded-3xl object-cover border-4 border-white/30 shadow-2xl mb-4 bg-white" />
           ) : (
-            <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-xl sm:rounded-2xl mx-auto flex items-center justify-center shadow-sm shadow-pink-200 mb-1.5 sm:mb-2 border-2 border-white">
-              <span className="text-white text-xl sm:text-2xl font-extrabold">
-                {profile.business_name.charAt(0).toUpperCase()}
-              </span>
+            <div className="w-24 h-24 rounded-3xl bg-white/20 backdrop-blur-md border-4 border-white/30 flex items-center justify-center text-white text-3xl font-black shadow-2xl mb-4">
+              {profile.business_name?.charAt(0).toUpperCase()}
             </div>
           )}
-
-          <h1 className="text-lg sm:text-2xl font-extrabold text-slate-800 leading-tight">
-            {profile.business_name}
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 font-medium">
-            Agende seu horário online
-          </p>
+          <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-1 drop-shadow-sm">{profile.business_name}</h1>
+          <p className="text-pink-100 text-sm font-medium tracking-wide">Agende seu horário online de forma rápida e segura</p>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-2xl mx-auto px-4 pt-5 sm:pt-8">
-        {success ? (
-          <div className="bg-white p-8 sm:p-10 rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white text-center animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-3">
-              Agendamento Realizado!
-            </h2>
-            <p className="text-slate-500 mb-8">
-              Tudo pronto! Seu horário foi reservado com sucesso.
-            </p>
-            <button 
-              onClick={() => { 
-                setSuccess(false); 
-                setSelectedService(null); 
-                setSelectedDate(""); 
-                setSelectedTime(""); 
-                setClientName(""); 
-                setClientPhone(""); 
-              }}
-              className="bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold px-8 py-4 rounded-xl shadow-lg shadow-pink-200 hover:shadow-xl active:scale-[0.98] transition-all"
-            >
-              Fazer Outro Agendamento
-            </button>
+      <main className="max-w-3xl mx-auto px-4 -mt-10 relative z-20 space-y-8">
+        
+        {/* PASSO 1: SELECIONAR SERVIÇO */}
+        <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-xl shadow-pink-100/50 border border-pink-100/80">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-pink-500 text-white font-black text-sm flex items-center justify-center shadow-md shadow-pink-200">1</div>
+            <h2 className="text-xl font-extrabold text-slate-900">Escolha o Serviço</h2>
           </div>
-        ) : (
-          <form onSubmit={handleBooking} className="space-y-8 animate-in fade-in duration-300">
-            
-            <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white">
-              <h3 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-3">
-                <span className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
-                Selecione o Serviço
-              </h3>
 
-              <div className="space-y-3">
-                {services.length === 0 && (
-                  <p className="text-slate-500 text-sm italic text-center py-4">
-                    Nenhum serviço disponível no momento.
-                  </p>
-                )}
-                {services.map((service) => {
-                  const isSelected = selectedService?.id === service.id;
-                  return (
-                    <div 
-                      key={service.id}
-                      onClick={() => setSelectedService(service)}
-                      className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all flex justify-between items-center ${
-                        isSelected 
-                          ? 'border-pink-500 bg-pink-50/50 shadow-sm' 
-                          : 'border-slate-100 hover:border-pink-200 bg-white'
-                      }`}
-                    >
-                      <div>
-                        <h4 className={`font-bold ${isSelected ? 'text-pink-700' : 'text-slate-800'}`}>
-                          {service.name}
-                        </h4>
-                        <p className="text-xs text-slate-400 mt-1 font-medium">
-                          {service.duration_minutes} minutos
-                        </p>
+          {services.length === 0 ? (
+            <div className="text-center py-10 bg-slate-50 rounded-2xl border border-slate-100">
+              <p className="text-slate-400 font-medium text-sm">Nenhum serviço disponível no momento.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {services.map((service) => {
+                const isSelected = selectedService?.id === service.id;
+                return (
+                  <div 
+                    key={service.id}
+                    onClick={() => setSelectedService(service)}
+                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between ${
+                      isSelected 
+                        ? 'border-pink-500 bg-pink-50/50 shadow-md shadow-pink-100 scale-[1.01]' 
+                        : 'border-slate-100 hover:border-pink-200 bg-white shadow-sm'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex justify-between items-start gap-2 mb-2">
+                        <h3 className="font-bold text-slate-800 text-base leading-tight">{service.name}</h3>
+                        <span className={`w-5 h-5 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${isSelected ? 'border-pink-500 bg-pink-500 text-white' : 'border-slate-300'}`}>
+                          {isSelected && <span className="w-2 h-2 rounded-full bg-white"></span>}
+                        </span>
                       </div>
-                      <span className="text-lg sm:text-xl font-extrabold text-pink-600">
-                        R$ {service.price.toFixed(2).replace(".", ",")}
-                      </span>
+                      <p className="text-xs text-slate-400 font-medium flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {service.duration_minutes} minutos
+                      </p>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white">
-              <h3 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-3">
-                <span className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
-                Data e Horário
-              </h3>
-
-              <div className="space-y-6">
-                <div>
-                  <input 
-                    type="date" 
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-pink-300 text-slate-800 font-medium transition-all"
-                  />
-                </div>
-
-                <div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {availableHours.map((time) => {
-                      const isTimeSelected = selectedTime === time;
-                      
-                      const [h, m] = time.split(":").map(Number);
-                      const slotStart = (h * 60) + m;
-                      const duration = selectedService ? selectedService.duration_minutes : 30; 
-                      const slotEnd = slotStart + duration;
-
-                      const isBooked = bookedIntervals.some(inv => {
-                        return (slotStart < inv.endMins) && (slotEnd > inv.startMins);
-                      });
-                      
-                      return (
-                        <button
-                          type="button"
-                          key={time}
-                          disabled={isBooked}
-                          onClick={() => selectedService ? setSelectedTime(time) : setAlertMessage("Por favor, selecione um serviço no Passo 1 primeiro!")}
-                          className={`py-3 rounded-xl text-sm font-bold border-2 transition-all ${
-                            isBooked 
-                              ? 'bg-slate-100 text-slate-400 border-slate-100 cursor-not-allowed line-through opacity-70'
-                              : isTimeSelected 
-                                ? 'bg-gradient-to-r from-pink-500 to-rose-400 text-white border-transparent shadow-md shadow-pink-200 scale-105' 
-                                : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600'
-                          }`}
-                        >
-                          {time}
-                        </button>
-                      );
-                    })}
+                    <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Valor</span>
+                      <span className="text-lg font-black text-pink-600">R$ {service.price.toFixed(2).replace(".", ",")}</span>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
+          )}
+        </div>
 
-            <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white">
-              <h3 className="text-lg font-bold text-slate-800 mb-5 flex items-center gap-3">
-                <span className="w-8 h-8 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
-                Seus Dados
-              </h3>
+        {/* PASSO 2: DATA E HORÁRIO */}
+        <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-xl shadow-pink-100/50 border border-pink-100/80">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-pink-500 text-white font-black text-sm flex items-center justify-center shadow-md shadow-pink-200">2</div>
+            <h2 className="text-xl font-extrabold text-slate-900">Selecione a Data e o Horário</h2>
+          </div>
 
-              <div className="space-y-4">
-                <input 
-                  type="text" 
-                  placeholder="Nome Completo"
-                  value={clientName}
-                  onChange={(e) => setClientName(e.target.value)}
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-pink-300 text-slate-800 font-medium transition-all"
-                />
-                <input 
-                  type="text" 
-                  placeholder="WhatsApp (Ex: 21999999999)"
-                  value={clientPhone}
-                  onChange={(e) => setClientPhone(e.target.value)}
-                  className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-pink-300 text-slate-800 font-medium transition-all"
-                />
-              </div>
+          <div className="mb-6">
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Data do Atendimento</label>
+            <input 
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-800 outline-none focus:ring-2 focus:ring-pink-300 transition-all text-base"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">Horários Disponíveis</label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+              {availableHours.map((time) => {
+                const [h, m] = time.split(":").map(Number);
+                const slotStartMins = (h * 60) + m;
+                const slotEndMins = slotStartMins + (selectedService?.duration_minutes || 30);
+
+                const isOccupied = appointments.some(appt => {
+                  let aStart = 0; let aEnd = 0;
+                  if (appt.start_time && appt.end_time) {
+                    const startPart = appt.start_time.split("T")[1].substring(0, 5);
+                    const endPart = appt.end_time.split("T")[1].substring(0, 5);
+                    aStart = parseInt(startPart.split(":")[0]) * 60 + parseInt(startPart.split(":")[1]);
+                    aEnd = parseInt(endPart.split(":")[0]) * 60 + parseInt(endPart.split(":")[1]);
+                  }
+                  return (slotStartMins < aEnd) && (slotEndMins > aStart);
+                });
+
+                const isSelectedTime = selectedTime === time;
+
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    disabled={isOccupied}
+                    onClick={() => setSelectedTime(time)}
+                    className={`py-3.5 rounded-xl font-bold text-sm transition-all border-2 ${
+                      isOccupied 
+                        ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed line-through' 
+                        : isSelectedTime 
+                        ? 'bg-pink-500 text-white border-pink-500 shadow-md shadow-pink-200 scale-105' 
+                        : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600'
+                    }`}
+                  >
+                    {time}
+                  </button>
+                );
+              })}
             </div>
-
-            <button 
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-extrabold text-lg py-5 rounded-2xl shadow-xl shadow-pink-200 hover:shadow-2xl hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all"
-            >
-              {submitting ? "Confirmando Agendamento..." : "Confirmar Agendamento"}
-            </button>
-          </form>
-        )}
-      </main>
-
-      {/* Modal de Aviso Personalizado */}
-      {alertMessage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-xs w-full shadow-2xl scale-100 animate-in zoom-in-95 duration-200 text-center">
-            <h3 className="text-xl font-extrabold text-slate-800 mb-2">
-              {profile?.business_name || "Aviso"}
-            </h3>
-            <p className="text-slate-600 mb-6 font-medium">
-              {alertMessage}
-            </p>
-            <button
-              type="button"
-              onClick={() => setAlertMessage("")}
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-400 hover:from-pink-600 hover:to-rose-500 text-white font-bold py-3 rounded-xl transition-colors shadow-lg shadow-pink-200"
-            >
-              OK, entendi
-            </button>
           </div>
         </div>
-      )}
+
+        {/* PASSO 3: SEUS DADOS E CONFIRMAÇÃO */}
+        <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-xl shadow-pink-100/50 border border-pink-100/80">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 rounded-full bg-pink-500 text-white font-black text-sm flex items-center justify-center shadow-md shadow-pink-200">3</div>
+            <h2 className="text-xl font-extrabold text-slate-900">Seus Dados para Contato</h2>
+          </div>
+
+          <form onSubmit={handleBooking} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Seu Nome Completo</label>
+              <input 
+                type="text"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
+                placeholder="Ex: Maria da Silva"
+                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-pink-300 font-medium text-slate-800 text-base"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Seu WhatsApp (com DDD)</label>
+              <input 
+                type="tel"
+                value={clientPhone}
+                onChange={(e) => setClientPhone(e.target.value)}
+                placeholder="Ex: 21999999999"
+                className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-pink-300 font-medium text-slate-800 text-base"
+                required
+              />
+            </div>
+
+            <div className="pt-4">
+              <button 
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-pink-600 text-white font-black text-lg py-5 rounded-2xl shadow-xl shadow-pink-200 hover:shadow-2xl hover:scale-[1.01] active:scale-[0.98] transition-all cursor-pointer"
+              >
+                {submitting ? "Confirmando Agendamento..." : "Confirmar Meu Horário 💅"}
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </main>
 
     </div>
   );
