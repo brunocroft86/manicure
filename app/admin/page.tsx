@@ -204,30 +204,37 @@ export default function AdminDashboard() {
     router.push("/login");
   }
 
-  if (authLoading) return <div className="min-h-screen bg-pink-50 flex items-center justify-center text-pink-500 font-bold animate-pulse">Carregando painel...</div>;
+  if (authLoading) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-12 h-12 border-4 border-pink-200 border-t-pink-500 rounded-full animate-spin"></div>
+        <div className="text-slate-500 font-medium text-sm animate-pulse">Carregando painel...</div>
+      </div>
+    </div>
+  );
 
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-white p-8 sm:p-10 rounded-3xl max-w-lg w-full text-center shadow-2xl relative overflow-hidden">
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 sm:p-10 rounded-[2rem] max-w-lg w-full text-center shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden animate-in zoom-in-95 duration-300">
           <div className="absolute top-0 inset-x-0 h-2 bg-red-500"></div>
-          <div className="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-red-50/50">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2">Acesso Suspenso</h1>
-          <p className="text-slate-600 mb-8 font-medium">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3 tracking-tight">Acesso Suspenso</h1>
+          <p className="text-slate-500 text-base mb-8 leading-relaxed">
             Sua assinatura do BelezaPro expirou. Renove agora para reativar seu sistema, recuperar seus agendamentos e continuar recebendo clientes online.
           </p>
           <a 
             href={whatsAppUrlExpired} 
             target="_blank" 
             rel="noopener noreferrer"
-            className="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-lg py-4 rounded-xl shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 mb-4"
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-lg py-4 rounded-2xl shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mb-4"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.88-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.396-.272.322-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" /></svg>
-            Renovar Assinatura no WhatsApp
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.88-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.396-.272.322-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z" /></svg>
+            Renovar pelo WhatsApp
           </a>
           <button onClick={handleLogout} className="text-slate-400 font-bold hover:text-slate-600 transition-colors text-sm">
             Sair da conta
@@ -250,17 +257,16 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-50 via-slate-50 to-white font-sans text-slate-800 pb-20">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
       
-      {/* HEADER COM MENU HAMBÚRGUER */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-pink-100 shadow-sm">
+      {/* HEADER PREMIUM BLUR */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200/60 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           
           <div className="flex items-center gap-3">
-            {/* BOTÃO DO MENU HAMBÚRGUER */}
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2.5 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 transition-colors md:hidden focus:outline-none"
+              className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors md:hidden focus:outline-none"
               aria-label="Abrir Menu"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -273,137 +279,174 @@ export default function AdminDashboard() {
             </button>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-pink-500 to-rose-400 rounded-xl flex items-center justify-center shadow-md shadow-pink-200">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-to-tr from-pink-600 to-rose-500 rounded-xl flex items-center justify-center shadow-md shadow-pink-200">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-800">Beleza<span className="text-pink-500">Pro</span></h1>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Beleza<span className="text-pink-600">Pro</span></h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-bold text-slate-700 hidden sm:inline">{profile?.business_name}</span>
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-bold text-slate-600 hidden sm:inline">{profile?.business_name}</span>
             
             {(daysRemaining !== null && daysRemaining <= 3) && (
-              <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-2.5 py-1 rounded-md uppercase hidden sm:inline">
+              <span className="bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-extrabold px-3 py-1.5 rounded-lg uppercase tracking-wider hidden sm:inline">
                 Teste Grátis
               </span>
             )}
 
-            <button onClick={handleLogout} className="text-xs text-red-500 hover:bg-red-50 px-3 py-2 rounded-full font-bold transition-colors">Sair</button>
+            <button onClick={handleLogout} className="text-xs text-slate-400 bg-slate-100 hover:bg-slate-200 hover:text-slate-600 px-4 py-2.5 rounded-full font-bold transition-all active:scale-95">Sair</button>
           </div>
         </div>
 
-        {/* NAVEGAÇÃO DESKTOP (Telas Médias e Grandes) */}
-        <div className="hidden md:flex max-w-7xl mx-auto px-6 gap-6 border-t border-slate-100 pt-2">
-          <button onClick={() => setActiveTab("catalogo")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === "catalogo" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Catálogo de Serviços</button>
-          <button onClick={() => setActiveTab("agenda")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === "agenda" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Agenda e Horários</button>
-          <button onClick={() => setActiveTab("config")} className={`pb-3 px-2 text-sm font-bold border-b-2 transition-colors ${activeTab === "config" ? "border-pink-500 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600"}`}>Configurações</button>
+        {/* NAVEGAÇÃO DESKTOP */}
+        <div className="hidden md:flex max-w-7xl mx-auto px-6 gap-8 pt-1">
+          <button onClick={() => setActiveTab("catalogo")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "catalogo" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Catálogo de Serviços</button>
+          <button onClick={() => setActiveTab("agenda")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "agenda" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Agenda e Horários</button>
+          <button onClick={() => setActiveTab("config")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "config" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Configurações</button>
         </div>
 
-        {/* MENU MOBILE SUSPENSO (Drawer do Hambúrguer) */}
+        {/* MENU MOBILE */}
         {mobileMenuOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-2xl py-4 px-6 space-y-3 animate-in slide-in-from-top duration-200 z-40">
-            <div className="pb-2 mb-2 border-b border-slate-100">
-              <p className="text-xs text-slate-400 font-bold uppercase">Logado como</p>
-              <p className="text-base font-black text-slate-800">{profile?.business_name}</p>
+          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-2xl py-5 px-6 space-y-3 animate-in slide-in-from-top duration-200 z-50">
+            <div className="pb-3 mb-3 border-b border-slate-100">
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Logado como</p>
+              <p className="text-lg font-black text-slate-800">{profile?.business_name}</p>
             </div>
 
             <button 
               onClick={() => { setActiveTab("catalogo"); setMobileMenuOpen(false); }}
-              className={`w-full text-left py-3 px-4 rounded-xl font-bold text-sm transition-colors flex items-center gap-3 ${activeTab === "catalogo" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-50"}`}
+              className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "catalogo" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}
             >
-              🛍️ Catálogo de Serviços
+              <span className="text-lg">🛍️</span> Catálogo de Serviços
             </button>
             <button 
               onClick={() => { setActiveTab("agenda"); setMobileMenuOpen(false); }}
-              className={`w-full text-left py-3 px-4 rounded-xl font-bold text-sm transition-colors flex items-center gap-3 ${activeTab === "agenda" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-50"}`}
+              className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "agenda" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}
             >
-              📅 Agenda e Horários
+              <span className="text-lg">📅</span> Agenda e Horários
             </button>
             <button 
               onClick={() => { setActiveTab("config"); setMobileMenuOpen(false); }}
-              className={`w-full text-left py-3 px-4 rounded-xl font-bold text-sm transition-colors flex items-center gap-3 ${activeTab === "config" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-50"}`}
+              className={`w-full text-left py-3.5 px-4 rounded-2xl font-bold text-sm transition-all flex items-center gap-3 ${activeTab === "config" ? "bg-pink-50 text-pink-600" : "text-slate-600 hover:bg-slate-100"}`}
             >
-              ⚙️ Configurações
+              <span className="text-lg">⚙️</span> Configurações
             </button>
           </div>
         )}
       </header>
 
-      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-10">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         
         {/* BANNER DINÂMICO DE VENCIMENTO / TESTE GRÁTIS */}
         {profile?.subscription_expires_at && (
-          <div className={`px-4 py-3 sm:py-4 rounded-2xl mb-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm font-medium border shadow-sm ${
+          <div className={`px-5 py-4 sm:py-5 rounded-2xl mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-medium border shadow-sm ${
             (daysRemaining !== null && daysRemaining <= 3) 
               ? "bg-amber-50 border-amber-200 text-amber-800" 
               : "bg-blue-50 border-blue-200 text-blue-700"
           }`}>
             {(daysRemaining !== null && daysRemaining <= 3) ? (
               <>
-                <div className="flex items-center gap-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span><strong>Período de Teste Grátis:</strong> Restam apenas {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'}.</span>
+                <div className="flex items-center gap-2.5">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                  <span><strong>Período de Teste:</strong> Restam {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'}.</span>
                 </div>
                 <a 
                   href={whatsAppUrlActivate}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 py-1.5 rounded-lg transition-colors whitespace-nowrap shadow-sm text-xs sm:text-sm"
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl transition-all shadow-sm shadow-amber-200 w-full sm:w-auto text-center active:scale-95"
                 >
                   Ativar Assinatura
                 </a>
               </>
             ) : (
-              <div className="flex items-center justify-center gap-2 w-full">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>Sua assinatura é válida até: <strong>{new Date(profile.subscription_expires_at).toLocaleDateString('pt-BR')}</strong></span>
+              <div className="flex items-center justify-center gap-2.5 w-full">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>Assinatura ativa até: <strong>{new Date(profile.subscription_expires_at).toLocaleDateString('pt-BR')}</strong></span>
               </div>
             )}
           </div>
         )}
 
-        <div className="bg-gradient-to-r from-pink-500 to-rose-400 rounded-2xl sm:rounded-3xl p-5 sm:p-6 text-white shadow-lg shadow-pink-200/50 mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div>
-            <h2 className="text-lg sm:text-xl font-extrabold">Link do seu Estúdio</h2>
-            <p className="text-pink-100 text-xs sm:text-sm mt-0.5">Envie este link para suas clientes agendarem horários com você.</p>
+        {/* CARTÃO DE LINK DO ESTÚDIO */}
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 sm:p-8 text-white shadow-xl shadow-slate-200/50 mb-10 flex flex-col sm:flex-row justify-between items-center gap-6 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+          <div className="relative z-10 flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
+            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20 backdrop-blur-md">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight">Link do seu Estúdio</h2>
+              <p className="text-slate-300 text-sm mt-1 font-medium">Envie para suas clientes agendarem horários.</p>
+            </div>
           </div>
-          <button onClick={handleCopyLink} className="bg-white text-pink-600 font-bold px-5 py-3 rounded-xl shadow hover:bg-pink-50 active:scale-95 transition-all text-sm whitespace-nowrap cursor-pointer">
-            {copied ? "Link Copiado! 📋" : "Copiar Link de Agendamento"}
+          <button onClick={handleCopyLink} className="relative z-10 w-full sm:w-auto bg-white text-slate-900 hover:text-pink-600 font-bold px-6 py-3.5 rounded-xl shadow-lg hover:bg-slate-50 active:scale-95 transition-all text-sm whitespace-nowrap cursor-pointer flex items-center justify-center gap-2">
+            {copied ? (
+              <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> Copiado!</>
+            ) : "Copiar Link"}
           </button>
         </div>
 
         {/* === ABA CATÁLOGO === */}
         {activeTab === "catalogo" && (
           <div className="animate-in fade-in duration-300">
-            <div className="flex flex-col lg:flex-row gap-6 sm:gap-10">
+            <div className="flex flex-col lg:flex-row gap-6 sm:gap-8">
               <div className="w-full lg:w-1/3">
-                <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white lg:sticky lg:top-36">
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-800 mb-5 flex items-center gap-2"><span className="bg-pink-100 text-pink-500 p-1.5 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg></span>Novo Serviço</h3>
+                <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-200/60 lg:sticky lg:top-28">
+                  <h3 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                    <span className="bg-pink-50 text-pink-600 p-2 rounded-xl"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg></span>
+                    Novo Serviço
+                  </h3>
                   <form onSubmit={handleAddService} className="space-y-4">
-                    <div><label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Nome do Serviço</label><input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-4 py-3.5 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-200 outline-none text-base" placeholder="Ex: Unha de Gel" /></div>
-                    <div className="flex gap-3">
-                      <div className="w-1/2"><label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Valor</label><input type="text" inputMode="numeric" value={price} onChange={handlePriceChange} className="w-full px-4 py-3.5 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-200 outline-none text-base" placeholder="R$ 0,00" /></div>
-                      <div className="w-1/2"><label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Minutos</label><input type="number" inputMode="numeric" value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full px-4 py-3.5 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-200 outline-none text-base" placeholder="60" /></div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 pl-1">Nome do Serviço</label>
+                      <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full px-5 py-4 bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-pink-200 focus:border-pink-400 outline-none text-base transition-all" placeholder="Ex: Unha de Gel" />
                     </div>
-                    <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold py-4 rounded-xl hover:shadow-lg active:scale-[0.98] transition-all text-base mt-2 cursor-pointer">{loading ? "Salvando..." : "Salvar no Catálogo"}</button>
+                    <div className="flex gap-4">
+                      <div className="w-1/2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 pl-1">Valor</label>
+                        <input type="text" inputMode="numeric" value={price} onChange={handlePriceChange} className="w-full px-5 py-4 bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-pink-200 focus:border-pink-400 outline-none text-base transition-all" placeholder="R$ 0,00" />
+                      </div>
+                      <div className="w-1/2">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 pl-1">Minutos</label>
+                        <input type="number" inputMode="numeric" value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full px-5 py-4 bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-pink-200 focus:border-pink-400 outline-none text-base transition-all" placeholder="60" />
+                      </div>
+                    </div>
+                    <div className="pt-2">
+                      <button type="submit" disabled={loading} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all text-base cursor-pointer">
+                        {loading ? "Salvando..." : "Adicionar Serviço"}
+                      </button>
+                    </div>
                   </form>
                 </div>
               </div>
               <div className="w-full lg:w-2/3">
-                <div className="bg-white p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white">
-                  <div className="flex justify-between items-center mb-5 sm:mb-6 px-1"><h3 className="text-lg sm:text-xl font-bold text-slate-800">Meus Serviços</h3><span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-full">{services.length} ativos</span></div>
-                  <div className="space-y-3 sm:space-y-4">
-                    {services.length === 0 && <div className="text-center py-12 bg-slate-50/50 rounded-2xl border-2 border-dashed border-pink-100"><p className="text-slate-500 font-medium text-sm sm:text-base">Nenhum serviço encontrado.</p></div>}
+                <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-200/60">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900">Catálogo Ativo</h3>
+                    <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200">{services.length} ativos</span>
+                  </div>
+                  <div className="space-y-4">
+                    {services.length === 0 && <div className="text-center py-16 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200"><p className="text-slate-400 font-medium">Nenhum serviço cadastrado ainda.</p></div>}
                     {services.map((service) => (
-                      <div key={service.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 sm:p-5 rounded-2xl border border-slate-100 hover:border-pink-200 shadow-sm transition-all bg-white gap-4">
+                      <div key={service.id} className="group flex flex-col sm:flex-row sm:justify-between sm:items-center p-5 rounded-2xl border border-slate-100 hover:border-pink-200 hover:shadow-md hover:shadow-pink-100/50 transition-all bg-white gap-4">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-pink-50 flex items-center justify-center text-pink-400 flex-shrink-0"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg></div>
-                          <div><h4 className="text-base sm:text-lg font-bold text-slate-700 leading-tight">{service.name}</h4><p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">{service.duration_minutes} min</p></div>
+                          <div className="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center text-pink-500 flex-shrink-0 group-hover:bg-pink-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                          </div>
+                          <div>
+                            <h4 className="text-base sm:text-lg font-bold text-slate-800 leading-tight">{service.name}</h4>
+                            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium flex items-center gap-1">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> {service.duration_minutes} min
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-50">
-                          <span className="text-lg sm:text-xl font-extrabold text-slate-800 bg-slate-50 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl">R$ {service.price.toFixed(2).replace(".", ",")}</span>
-                          <button onClick={() => handleDeleteService(service.id)} className="text-red-400 hover:text-white bg-red-50 p-2.5 sm:p-3 rounded-xl hover:bg-red-500 active:scale-95 transition-all cursor-pointer"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                          <span className="text-lg sm:text-xl font-black text-slate-800">R$ {service.price.toFixed(2).replace(".", ",")}</span>
+                          <button onClick={() => handleDeleteService(service.id)} className="text-slate-400 hover:text-red-500 bg-slate-50 p-3 rounded-xl hover:bg-red-50 active:scale-95 transition-all cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -417,26 +460,26 @@ export default function AdminDashboard() {
         {/* === ABA AGENDA === */}
         {activeTab === "agenda" && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="bg-white p-4 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white max-w-3xl mx-auto">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-                <h3 className="text-xl font-bold text-slate-800">Próximos Agendamentos</h3>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none w-full sm:w-auto focus:ring-2 focus:ring-pink-300 transition-all" />
-                  {filterDate && <button onClick={() => setFilterDate("")} className="text-xs text-slate-500 bg-slate-100 px-3 py-2.5 rounded-xl font-bold hover:bg-slate-200 whitespace-nowrap transition-colors cursor-pointer">Ver Todos</button>}
+            <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-200/60 max-w-4xl mx-auto">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+                <h3 className="text-xl font-bold text-slate-900">Controle de Agenda</h3>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 outline-none w-full sm:w-auto focus:ring-2 focus:ring-pink-200 transition-all cursor-pointer" />
+                  {filterDate && <button onClick={() => setFilterDate("")} className="text-xs text-slate-500 bg-white border border-slate-200 px-4 py-3 rounded-xl font-bold hover:bg-slate-50 whitespace-nowrap transition-colors cursor-pointer">Limpar</button>}
                 </div>
               </div>
 
               {filterDate && (
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 mb-8 animate-in fade-in zoom-in-95 duration-200">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                    <h4 className="font-bold text-slate-700">Gerenciar Grade de Horários</h4>
-                    <div className="flex gap-3 text-[10px] sm:text-xs font-bold text-slate-500 uppercase">
-                      <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-white border border-slate-300"></div> Livre</span>
-                      <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-slate-200"></div> Bloqueado</span>
-                      <span className="flex items-center gap-1"><div className="w-2.5 h-2.5 rounded-sm bg-pink-100 border border-pink-300"></div> Cliente</span>
+                <div className="bg-slate-50 p-6 rounded-[1.5rem] border border-slate-200 mb-8 animate-in fade-in zoom-in-95 duration-200">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                    <h4 className="font-bold text-slate-800">Bloqueio Rápido de Horários</h4>
+                    <div className="flex gap-4 text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
+                      <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-white border-2 border-slate-300"></div> Livre</span>
+                      <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-300"></div> Bloqueado</span>
+                      <span className="flex items-center gap-1.5"><div className="w-3 h-3 rounded-full bg-pink-100 border-2 border-pink-300"></div> Ocupado</span>
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
                     {availableHours.map((time) => {
                       const [h, m] = time.split(":").map(Number);
                       const slotStartMins = (h * 60) + m;
@@ -456,7 +499,7 @@ export default function AdminDashboard() {
                       const isBlocked = !!blockAppt; const isBooked = !!clientAppt;
 
                       return (
-                        <button key={time} type="button" disabled={blockLoading} onClick={() => handleToggleGridBlock(time, isBlocked, blockAppt?.id || null, isBooked)} className={`py-2 rounded-lg text-xs sm:text-sm font-bold border-2 transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${isBooked ? 'bg-pink-100 text-pink-700 border-pink-200 cursor-not-allowed' : isBlocked ? 'bg-slate-200 text-slate-500 border-slate-300 hover:bg-slate-300 line-through opacity-80' : 'bg-white text-slate-700 border-slate-200 hover:border-pink-300 hover:text-pink-600'}`}>
+                        <button key={time} type="button" disabled={blockLoading} onClick={() => handleToggleGridBlock(time, isBlocked, blockAppt?.id || null, isBooked)} className={`py-3 rounded-xl text-xs sm:text-sm font-bold border-2 transition-all flex flex-col items-center justify-center gap-1 cursor-pointer active:scale-95 ${isBooked ? 'bg-pink-50 text-pink-700 border-pink-200 cursor-not-allowed shadow-sm' : isBlocked ? 'bg-slate-200 text-slate-400 border-slate-300 hover:bg-slate-300 line-through opacity-70' : 'bg-white text-slate-600 border-slate-200 hover:border-pink-300 hover:text-pink-600 shadow-sm hover:shadow-md'}`}>
                           {time} {isBlocked && <span className="text-[10px] leading-none no-underline">🔒</span>} {isBooked && <span className="text-[10px] leading-none no-underline">💅</span>}
                         </button>
                       );
@@ -466,7 +509,7 @@ export default function AdminDashboard() {
               )}
 
               <div className="space-y-4">
-                {filteredAppointments.length === 0 && <div className="text-center py-16 bg-slate-50/50 rounded-3xl border-2 border-dashed border-pink-100"><p className="text-slate-500 font-medium text-lg">Nenhum registro encontrado.</p></div>}
+                {filteredAppointments.length === 0 && <div className="text-center py-16 bg-slate-50/50 rounded-3xl border-2 border-dashed border-slate-200"><p className="text-slate-400 font-medium text-base">Nenhum agendamento para este dia.</p></div>}
                 {filteredAppointments.map((appt) => {
                   let timePart = "00:00"; let datePart = "2026-01-01";
                   if (appt.start_time && appt.start_time.includes("T")) {
@@ -474,33 +517,40 @@ export default function AdminDashboard() {
                     timePart = appt.start_time.split("T")[1].substring(0, 5); 
                   }
                   const [year, month, day] = datePart.split("-");
-                  const monthsNames = ["JAN.", "FEV.", "MAR.", "ABR.", "MAI.", "JUN.", "JUL.", "AGO.", "SET.", "OUT.", "NOV.", "DEZ."];
+                  const monthsNames = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
                   const isBlock = appt.status === "Bloqueado" || appt.client_name?.includes("BLOQUEIO");
-                  const whatsMessage = encodeURIComponent(`Olá ${appt.client_name}! Aqui é do ${profile?.business_name}. Estou entrando em contato para confirmar seu agendamento de *${appt.service?.name}* para o dia *${day}/${month}/${year}* às *${timePart}*. Tudo confirmado?`);
+                  const whatsMessage = encodeURIComponent(`Olá ${appt.client_name}! Aqui é do estúdio ${profile?.business_name}. Estou entrando em contato para confirmar seu agendamento de *${appt.service?.name}* para o dia *${day}/${month}* às *${timePart}*. Tudo confirmado?`);
 
                   return (
-                    <div key={appt.id} className={`flex flex-col sm:flex-row p-5 rounded-2xl border gap-4 justify-between items-start sm:items-center ${isBlock ? 'bg-slate-100/70 border-slate-200' : 'bg-slate-50/30 border-slate-100'}`}>
-                      <div className="flex items-center gap-4">
-                        <div className={`rounded-xl shadow-sm border w-16 h-16 flex flex-col items-center justify-center flex-shrink-0 ${isBlock ? 'bg-slate-200 border-slate-300 opacity-60' : 'bg-white border-slate-200'}`}>
-                          <span className={`text-xs font-bold uppercase ${isBlock ? 'text-slate-500' : 'text-pink-500'}`}>{monthsNames[parseInt(month, 10) - 1]}</span>
-                          <span className={`text-xl font-extrabold leading-none mt-1 ${isBlock ? 'text-slate-600' : 'text-slate-800'}`}>{day}</span>
+                    <div key={appt.id} className={`flex flex-col sm:flex-row p-6 rounded-2xl border gap-5 justify-between items-start sm:items-center transition-all ${isBlock ? 'bg-slate-50/50 border-slate-200 opacity-80' : 'bg-white border-slate-200 shadow-sm hover:shadow-md hover:border-pink-200'}`}>
+                      <div className="flex items-center gap-5">
+                        <div className={`rounded-2xl border w-16 h-16 flex flex-col items-center justify-center flex-shrink-0 ${isBlock ? 'bg-slate-100 border-slate-200' : 'bg-pink-50 border-pink-100'}`}>
+                          <span className={`text-[10px] font-black uppercase tracking-wider ${isBlock ? 'text-slate-400' : 'text-pink-500'}`}>{monthsNames[parseInt(month, 10) - 1]}</span>
+                          <span className={`text-xl font-black leading-none mt-1 ${isBlock ? 'text-slate-500' : 'text-slate-800'}`}>{day}</span>
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className={`font-bold text-lg leading-tight ${isBlock ? 'text-slate-600 line-through decoration-slate-400' : 'text-slate-800'}`}>{isBlock ? "🔒 Horário Bloqueado" : appt.client_name}</h4>
-                            {!isBlock && <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase ${appt.status === 'Concluído' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}`}>{appt.status || 'Pendente'}</span>}
+                          <div className="flex items-center gap-3">
+                            <h4 className={`font-bold text-lg leading-tight ${isBlock ? 'text-slate-500 line-through decoration-slate-300' : 'text-slate-900'}`}>{isBlock ? "🔒 Horário Bloqueado" : appt.client_name}</h4>
+                            {!isBlock && <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider ${appt.status === 'Concluído' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>{appt.status || 'Pendente'}</span>}
                           </div>
-                          <p className="text-sm font-medium text-slate-500 mt-0.5">{isBlock ? "Agenda fechada neste período" : appt.service?.name} • <strong className="text-slate-700">{timePart}</strong></p>
+                          <p className="text-sm font-medium text-slate-500 mt-1">{isBlock ? "Grade fechada pelo sistema" : appt.service?.name} • <strong className="text-slate-800">{timePart}</strong></p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end pt-3 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex-wrap">
+                      <div className="flex items-center gap-3 w-full sm:w-auto justify-end pt-4 sm:pt-0 border-t sm:border-t-0 border-slate-100 flex-wrap">
                         {!isBlock && (
                           <>
-                            <a href={`https://wa.me/55${appt.client_phone}?text=${whatsMessage}`} target="_blank" className="text-xs font-bold text-green-700 bg-green-50 px-3 py-2 rounded-xl hover:bg-green-100 transition-colors flex items-center gap-1.5 shadow-sm">WhatsApp</a>
-                            {appt.status !== 'Concluído' ? <button onClick={() => handleUpdateStatus(appt.id, 'Concluído')} className="text-xs font-bold text-slate-600 bg-white border border-slate-200 px-3 py-2 rounded-xl hover:bg-slate-50 transition-colors shadow-sm cursor-pointer">Concluir</button> : <button onClick={() => handleUpdateStatus(appt.id, 'Pendente')} className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-2 rounded-xl hover:bg-amber-100 transition-colors shadow-sm cursor-pointer">Reabrir</button>}
+                            <a href={`https://wa.me/55${appt.client_client_phone || appt.client_phone}?text=${whatsMessage}`} target="_blank" rel="noreferrer" className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-4 py-2.5 rounded-xl hover:bg-green-50 hover:text-green-600 hover:border-green-200 transition-all flex items-center gap-1.5 shadow-sm active:scale-95">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" /></svg> Contatar
+                            </a>
+                            {appt.status !== 'Concluído' 
+                              ? <button onClick={() => handleUpdateStatus(appt.id, 'Concluído')} className="text-xs font-bold text-white bg-slate-900 border border-transparent px-4 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm cursor-pointer active:scale-95">Concluir</button> 
+                              : <button onClick={() => handleUpdateStatus(appt.id, 'Pendente')} className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2.5 rounded-xl hover:bg-amber-100 transition-all shadow-sm cursor-pointer active:scale-95">Reabrir</button>}
                           </>
                         )}
-                        <button onClick={() => handleDeleteAppointment(appt.id)} className={`text-xs font-bold px-3 py-2 rounded-xl transition-colors shadow-sm cursor-pointer ${isBlock ? 'text-slate-700 bg-white border border-slate-300 hover:bg-slate-200' : 'text-red-500 bg-red-50 hover:bg-red-100'}`}>{isBlock ? "Desbloquear" : "Excluir"}</button>
+                        <button onClick={() => handleDeleteAppointment(appt.id)} className={`text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer active:scale-95 flex items-center gap-1.5 ${isBlock ? 'text-slate-600 bg-white border border-slate-200 hover:bg-slate-50' : 'text-red-600 bg-red-50 border border-red-100 hover:bg-red-100'}`}>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                          {isBlock ? "Liberar" : "Excluir"}
+                        </button>
                       </div>
                     </div>
                   )
@@ -513,50 +563,59 @@ export default function AdminDashboard() {
         {/* === ABA CONFIGURAÇÕES === */}
         {activeTab === "config" && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="bg-white p-5 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] shadow-lg shadow-rose-100/40 border border-white max-w-xl mx-auto">
+            <div className="bg-white p-6 sm:p-10 rounded-[2rem] shadow-sm border border-slate-200/60 max-w-2xl mx-auto">
               
               <div className="mb-10 pb-10 border-b border-slate-100">
-                <h3 className="text-xl font-bold text-slate-800 mb-2">Logo do Estúdio</h3>
-                <p className="text-sm text-slate-500 mb-6">Envie uma imagem para substituir a letra inicial na sua página de agendamentos.</p>
-                <div className="flex items-center gap-6">
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Personalização Visual</h3>
+                <p className="text-sm text-slate-500 mb-8">Envie a logo do seu estúdio para transmitir mais profissionalismo na sua página de agendamentos.</p>
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                   {profile?.logo_url ? (
-                    <img src={profile.logo_url} alt="Sua Logo" className="w-24 h-24 rounded-2xl object-cover border-2 border-pink-100 shadow-sm" />
+                    <div className="relative group">
+                      <img src={profile.logo_url} alt="Sua Logo" className="w-28 h-28 rounded-full object-cover border-4 border-pink-50 shadow-md" />
+                      <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16l5-5m0 0l5 5m-5-5v12" /></svg>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="w-24 h-24 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-300">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <div className="w-28 h-28 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 border-2 border-dashed border-slate-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>
                   )}
-                  <div className="flex-1">
-                    <label className="block bg-pink-50 text-pink-600 font-bold py-3 px-4 rounded-xl text-center cursor-pointer hover:bg-pink-100 transition-colors">
-                      {uploadingLogo ? "Enviando imagem..." : "Escolher Imagem"}
+                  <div className="flex-1 w-full sm:w-auto text-center sm:text-left mt-2 sm:mt-4">
+                    <label className="inline-block bg-white border-2 border-slate-200 text-slate-700 font-bold py-3 px-6 rounded-2xl cursor-pointer hover:border-pink-300 hover:text-pink-600 active:scale-95 transition-all shadow-sm w-full sm:w-auto">
+                      {uploadingLogo ? "Enviando..." : "Alterar Imagem"}
                       <input type="file" accept="image/*" className="hidden" onChange={handleUploadLogo} disabled={uploadingLogo} />
                     </label>
-                    <p className="text-xs text-slate-400 mt-2 text-center">Formatos aceitos: JPG, PNG, WEBP.</p>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mt-4">JPG, PNG, WEBP (Max. 2MB)</p>
                   </div>
                 </div>
               </div>
 
-              <h3 className="text-xl font-bold text-slate-800 mb-2">Horário de Atendimento</h3>
-              <p className="text-sm text-slate-500 mb-6">Defina o intervalo em que seu estúdio aceita agendamentos online.</p>
-              <form onSubmit={handleSaveConfig} className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="w-1/2">
-                    <label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Horário de Abertura</label>
-                    <select value={startHour} onChange={(e) => setStartHour(e.target.value)} className="w-full px-4 py-3.5 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-200 outline-none text-base">
-                      {Array.from({ length: 24 }).map((_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>)}
-                    </select>
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Expediente de Trabalho</h3>
+                <p className="text-sm text-slate-500 mb-6">Defina o intervalo em que seu estúdio aceita agendamentos online.</p>
+                <form onSubmit={handleSaveConfig} className="space-y-6">
+                  <div className="flex flex-col sm:flex-row gap-5">
+                    <div className="w-full sm:w-1/2">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 pl-1">Horário de Abertura</label>
+                      <select value={startHour} onChange={(e) => setStartHour(e.target.value)} className="w-full px-5 py-4 bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-pink-200 focus:border-pink-400 outline-none text-base transition-all font-medium appearance-none cursor-pointer">
+                        {Array.from({ length: 24 }).map((_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>)}
+                      </select>
+                    </div>
+                    <div className="w-full sm:w-1/2">
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 pl-1">Horário de Fechamento</label>
+                      <select value={endHour} onChange={(e) => setEndHour(e.target.value)} className="w-full px-5 py-4 bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-pink-200 focus:border-pink-400 outline-none text-base transition-all font-medium appearance-none cursor-pointer">
+                        {Array.from({ length: 24 }).map((_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>)}
+                      </select>
+                    </div>
                   </div>
-                  <div className="w-1/2">
-                    <label className="block text-xs sm:text-sm font-semibold text-slate-600 mb-1.5 pl-1">Horário de Fechamento</label>
-                    <select value={endHour} onChange={(e) => setEndHour(e.target.value)} className="w-full px-4 py-3.5 bg-slate-50 text-slate-900 border border-slate-200 rounded-xl focus:ring-2 focus:ring-pink-200 outline-none text-base">
-                      {Array.from({ length: 24 }).map((_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}:00</option>)}
-                    </select>
+                  <div className="pt-2">
+                    <button type="submit" disabled={savingConfig} className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl shadow-lg shadow-slate-900/20 active:scale-[0.98] transition-all text-base cursor-pointer">
+                      {savingConfig ? "Salvando Alterações..." : "Salvar Configurações"}
+                    </button>
                   </div>
-                </div>
-                <button type="submit" disabled={savingConfig} className="w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-bold py-4 rounded-xl hover:shadow-lg active:scale-[0.98] transition-all text-base mt-4 cursor-pointer">
-                  {savingConfig ? "Salvando..." : "Salvar Configurações"}
-                </button>
-              </form>
+                </form>
+              </div>
             </div>
           </div>
         )}
