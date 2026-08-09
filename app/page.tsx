@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   const whatsAppNumber = "5521978308046";
-  const whatsAppMessage = encodeURIComponent("Olá! Vi o sistema BelezaPro por R$ 50/mês, onde adiciono meus serviços e o sistema calcula tudo automático. Quero começar meu teste grátis de 3 dias!");
+  const whatsAppMessage = encodeURIComponent("Olá! Vi o sistema BelezaPro por R$ 50/mês, onde posso usar a logo e o nome do meu salão. Quero começar meu teste grátis de 3 dias!");
   const whatsAppUrl = `https://wa.me/${whatsAppNumber}?text=${whatsAppMessage}`;
 
   return (
@@ -52,7 +52,6 @@ export default function Home() {
           </span>
         </h1>
 
-        {/* TEXTO ATUALIZADO EXPLICANDO O CÁLCULO DOS SERVIÇOS */}
         <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-2xl mx-auto font-medium">
           Adicione seus serviços, valores e o tempo de cada atendimento. <strong className="text-slate-900 font-bold">Assim nós calculamos todo o tempo restante e organizamos os horários para você</strong> por apenas <strong className="text-pink-600 font-extrabold">R$ 50 mensais</strong>.
         </p>
@@ -91,8 +90,8 @@ export default function Home() {
           <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-start gap-3.5">
             <div className="w-10 h-10 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center flex-shrink-0 font-bold">2</div>
             <div>
-              <h3 className="font-bold text-slate-800 text-sm sm:text-base">Link no Instagram</h3>
-              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Suas clientes agendam sozinhas direto pelo celular.</p>
+              <h3 className="font-bold text-slate-800 text-sm sm:text-base">Sua Logo e Nome</h3>
+              <p className="text-slate-500 text-xs sm:text-sm mt-0.5">Personalize o aplicativo com a identidade visual do seu salão.</p>
             </div>
           </div>
 
