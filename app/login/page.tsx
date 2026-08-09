@@ -73,14 +73,16 @@ export default function LoginPage() {
           .replace(/[^a-z0-9]+/g, "-") // Troca espaços por traços
           .replace(/(^-|-$)+/g, ""); 
 
+        // TRAVA DE SEGURANÇA: Adiciona 4 números no final do slug para evitar duplicação no banco de dados!
+        const finalSlug = slug + "-" + Date.now().toString().slice(-4);
+
         // 3. Salva os dados públicos do salão na tabela "profiles"
         const { error: profileError } = await supabase.from("profiles").insert([
           {
             id: authData.user.id, // O mesmo ID da autenticação!
             business_name: businessName,
-            slug: slug,
-            // CORREÇÃO APLICADA AQUI: Mudei de 'phone' para 'whatsapp'
-            whatsapp: whatsapp.replace(/\D/g, ""), 
+            slug: finalSlug, // Usa o slug blindado com os números no final
+            whatsapp: whatsapp.replace(/\D/g, ""), // Salva só os números
           },
         ]);
 
