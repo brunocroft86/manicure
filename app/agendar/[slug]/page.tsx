@@ -208,7 +208,7 @@ export default function PublicBookingPage() {
 
       <main className="max-w-2xl mx-auto px-4 -mt-14 relative z-20 space-y-6">
         
-        {/* PASSO 1 */}
+        {/* PASSO 1 - ATUALIZADO E COMPACTO */}
         <div className="bg-white p-6 sm:p-8 rounded-[2rem] shadow-sm border border-slate-200/60">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-10 h-10 rounded-full bg-pink-50 text-pink-600 font-black text-sm flex items-center justify-center">1</div>
@@ -220,38 +220,42 @@ export default function PublicBookingPage() {
               <p className="text-slate-400 font-medium text-sm">Nenhum serviço cadastrado.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="flex flex-col gap-3 bg-slate-50/50 p-2 sm:p-4 rounded-2xl border border-slate-100">
               {services.map((service) => {
                 const isSelected = selectedService?.id === service.id;
                 return (
-                  <div 
-                    key={service.id}
+                  <label 
+                    key={service.id} 
                     onClick={() => setSelectedService(service)}
-                    className={`p-5 rounded-2xl border-2 transition-all cursor-pointer group flex flex-col justify-between ${
+                    className={`flex items-center justify-between p-4 rounded-2xl border-2 cursor-pointer transition-all ${
                       isSelected 
-                        ? 'border-pink-500 bg-pink-50/30 shadow-md shadow-pink-100/50' 
-                        : 'border-slate-100 hover:border-pink-200 hover:bg-slate-50/50'
+                        ? 'border-pink-500 bg-pink-50/70 shadow-sm' 
+                        : 'border-slate-100 bg-white hover:border-pink-200 shadow-sm hover:shadow-md'
                     }`}
                   >
-                    <div>
-                      <div className="flex justify-between items-start gap-2 mb-1">
-                        <h3 className={`font-bold text-base leading-tight ${isSelected ? 'text-pink-700' : 'text-slate-800'}`}>{service.name}</h3>
-                        
-                        {/* Custom Checkbox (bolinha) */}
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${isSelected ? 'border-pink-500 bg-pink-500' : 'border-slate-300 group-hover:border-pink-300'}`}>
-                          {isSelected && <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
-                        </div>
+                    {/* Lado Esquerdo: Radio Button e Título */}
+                    <div className="flex items-center gap-3 sm:gap-4">
+                      {/* Radio Button Customizado */}
+                      <div className={`w-5 h-5 rounded-full border-2 flex flex-shrink-0 items-center justify-center transition-colors ${
+                        isSelected ? 'border-pink-500' : 'border-slate-300 group-hover:border-pink-300'
+                      }`}>
+                        {isSelected && <div className="w-2.5 h-2.5 bg-pink-500 rounded-full animate-in zoom-in duration-200"></div>}
                       </div>
-                      <p className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mt-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        {service.duration_minutes} min
-                      </p>
+                      
+                      <div>
+                        <h4 className={`text-sm sm:text-base font-bold leading-tight ${isSelected ? 'text-pink-700' : 'text-slate-800'}`}>{service.name}</h4>
+                        <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 font-medium flex items-center gap-1">
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                           {service.duration_minutes} min
+                        </p>
+                      </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-slate-100/80 flex items-end justify-between">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Valor</span>
-                      <span className={`text-lg font-black ${isSelected ? 'text-pink-600' : 'text-slate-700'}`}>R$ {service.price.toFixed(2).replace(".", ",")}</span>
+
+                    {/* Lado Direito: Preço */}
+                    <div className={`text-sm sm:text-base font-black ${isSelected ? 'text-pink-700' : 'text-slate-800'}`}>
+                      R$ {service.price.toFixed(2).replace('.', ',')}
                     </div>
-                  </div>
+                  </label>
                 );
               })}
             </div>
