@@ -25,7 +25,6 @@ export default function AdminDashboard() {
   const [isExpired, setIsExpired] = useState(false);
   const [daysRemaining, setDaysRemaining] = useState<number | null>(null);
 
-  // NOVO: Adicionado "relatorios" na lista de abas
   const [activeTab, setActiveTab] = useState<"catalogo" | "agenda" | "relatorios" | "config">("catalogo");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -46,10 +45,9 @@ export default function AdminDashboard() {
 
   const [copied, setCopied] = useState(false);
 
-  // NOVO: Estados para os filtros do Relatório
   const [reportStartDate, setReportStartDate] = useState(() => {
     const d = new Date();
-    d.setDate(1); // Começa no dia 1 do mês atual
+    d.setDate(1); 
     return d.toISOString().split('T')[0];
   });
   const [reportEndDate, setReportEndDate] = useState(getTodayBrazil());
@@ -219,10 +217,33 @@ export default function AdminDashboard() {
   }
 
   function handleCopyLink() {
-    const publicUrl = `${window.location.origin}/agendar/${profile?.slug}`;
+    const publicUrl = `https://belezapro.art/agendar/${profile?.slug}`;
     navigator.clipboard.writeText(publicUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
+  }
+
+  // NOVA FUNÇÃO: Compartilhar nativo do celular
+  async function handleShareLink() {
+    const publicUrl = `https://belezapro.art/agendar/${profile?.slug}`;
+    const shareData = {
+      title: 'Agende seu horário!',
+      text: `Olá! Acesse meu link para agendar seu horário no ${profile?.business_name || 'estúdio'}: `,
+      url: publicUrl
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 3000);
+        alert("Link copiado para a área de transferência!");
+      }
+    } catch (err) {
+      console.log('Compartilhamento cancelado pelo usuário.', err);
+    }
   }
 
   async function handleLogout() {
@@ -270,22 +291,18 @@ export default function AdminDashboard() {
     );
   }
 
-  // Filtro para a Aba Agenda
   const filteredAppointments = appointments.filter(appt => {
     if (!filterDate) return true;
     const apptDate = appt.start_time?.split("T")[0];
     return apptDate === filterDate;
   });
 
-  // Geração de Horários da Grade
   const availableHours = [];
   for (let i = parseInt(startHour); i < parseInt(endHour); i++) {
     availableHours.push(`${String(i).padStart(2, '0')}:00`);
     availableHours.push(`${String(i).padStart(2, '0')}:30`);
   }
 
-  // --- LÓGICA DA NOVA ABA DE RELATÓRIOS ---
-  // Filtra agendamentos reais (tira os bloqueios) dentro das datas escolhidas
   const reportAppointments = appointments.filter(appt => {
     if (appt.client_name === "🔒 BLOQUEIO" || appt.status === "Bloqueado") return false;
     if (!appt.start_time) return false;
@@ -293,14 +310,12 @@ export default function AdminDashboard() {
     const isAfterStart = !reportStartDate || apptDate >= reportStartDate;
     const isBeforeEnd = !reportEndDate || apptDate <= reportEndDate;
     return isAfterStart && isBeforeEnd;
-  }).sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()); // Do mais recente para o mais antigo
+  }).sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime()); 
 
-  // Separa apenas os que foram finalizados para somar o dinheiro
   const completedAppointments = reportAppointments.filter(appt => appt.status === "Concluído");
   const totalRevenue = completedAppointments.reduce((acc, appt) => acc + (appt.service?.price || 0), 0);
   const totalClients = completedAppointments.length;
 
-  // Descobre o serviço campeão de vendas
   const serviceCounts: Record<string, number> = {};
   let topService = "Nenhum";
   let maxCount = 0;
@@ -318,7 +333,6 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20">
       
-      {/* HEADER PREMIUM BLUR */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-slate-200/60 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
           
@@ -356,7 +370,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* NAVEGAÇÃO DESKTOP (AGORA COM 4 ABAS) */}
         <div className="hidden md:flex max-w-7xl mx-auto px-6 gap-8 pt-1">
           <button onClick={() => setActiveTab("catalogo")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "catalogo" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Catálogo de Serviços</button>
           <button onClick={() => setActiveTab("agenda")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "agenda" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Agenda e Horários</button>
@@ -364,7 +377,6 @@ export default function AdminDashboard() {
           <button onClick={() => setActiveTab("config")} className={`pb-4 text-sm font-bold border-b-2 transition-all ${activeTab === "config" ? "border-pink-600 text-pink-600" : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"}`}>Configurações</button>
         </div>
 
-        {/* MENU MOBILE (AGORA COM 4 ABAS) */}
         {mobileMenuOpen && (
           <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200 shadow-2xl py-5 px-6 space-y-3 animate-in slide-in-from-top duration-200 z-50">
             <div className="pb-3 mb-3 border-b border-slate-100">
@@ -381,7 +393,6 @@ export default function AdminDashboard() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
         
-        {/* BANNER DINÂMICO DE VENCIMENTO / TESTE GRÁTIS */}
         {profile?.subscription_expires_at && (
           <div className={`px-5 py-4 sm:py-5 rounded-2xl mb-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm font-medium border shadow-sm ${
             (daysRemaining !== null && daysRemaining <= 3) 
@@ -405,10 +416,11 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* CARTÃO DE LINK DO ESTÚDIO */}
+        {/* CARTÃO DE LINK DO ESTÚDIO ATUALIZADO */}
         <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-[2rem] p-6 sm:p-8 text-white shadow-xl shadow-slate-200/50 mb-10 flex flex-col sm:flex-row justify-between items-center gap-6 relative overflow-hidden">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"></div>
-          <div className="relative z-10 flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row">
+          
+          <div className="relative z-10 flex items-center gap-4 text-center sm:text-left flex-col sm:flex-row w-full sm:w-auto">
             <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20 backdrop-blur-md">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-pink-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
             </div>
@@ -417,9 +429,23 @@ export default function AdminDashboard() {
               <p className="text-slate-300 text-sm mt-1 font-medium">Envie para suas clientes agendarem horários.</p>
             </div>
           </div>
-          <button onClick={handleCopyLink} className="relative z-10 w-full sm:w-auto bg-white text-slate-900 hover:text-pink-600 font-bold px-6 py-3.5 rounded-xl shadow-lg hover:bg-slate-50 active:scale-95 transition-all text-sm whitespace-nowrap cursor-pointer flex items-center justify-center gap-2">
-            {copied ? <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> Copiado!</> : "Copiar Link"}
-          </button>
+          
+          <div className="relative z-10 flex flex-col sm:flex-row gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+            {/* Botão de Copiar Tradicional */}
+            <button onClick={handleCopyLink} className="w-full sm:w-auto bg-slate-700/50 hover:bg-slate-700 border border-slate-600 text-white font-bold px-6 py-3.5 rounded-xl transition-all text-sm whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 active:scale-95">
+              {copied ? (
+                <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg> Copiado!</>
+              ) : (
+                <><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> Copiar Link</>
+              )}
+            </button>
+            
+            {/* Novo Botão de Compartilhar (Web Share API) */}
+            <button onClick={handleShareLink} className="w-full sm:w-auto bg-pink-500 hover:bg-pink-600 text-white font-bold px-6 py-3.5 rounded-xl shadow-lg shadow-pink-500/30 transition-all text-sm whitespace-nowrap cursor-pointer flex items-center justify-center gap-2 active:scale-95">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+              Compartilhar
+            </button>
+          </div>
         </div>
 
         {/* === ABA CATÁLOGO === */}
